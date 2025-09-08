@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+if [ "$HOOK" = "0" ]; then
+  echo "HOOK env set to 0, skipping hook"
+  exit 0
+fi
+
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js|tsx|jsx|json|md|yml|yaml)$')
+
+if [ -n "$FILES" ]; then
+  deno run -A npm:prettier --write $FILES
+
+  deno lint $FILES
+
+  echo "$FILES" | xargs git add
+fi
+
+echo "Pre-commit hook finished"
