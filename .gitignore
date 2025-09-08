@@ -1,0 +1,26 @@
+# Edit at https://www.toptal.com/developers/gitignore?templates=deno
+
+### Deno ###
+/.idea/
+/.vscode/
+
+/node_modules
+
+.env
+*.orig
+*.pyc
+*.swp
+
+# End of https://www.toptal.com/developers/gitignore/api/deno
+
+*.DS_Store
+dist/
+.cache/
+coverage/
+/volume
+/offtop
+
+# Build output
+/build
+*.exe
+*.dll

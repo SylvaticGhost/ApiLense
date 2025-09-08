@@ -1,0 +1,17 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-read --allow-write src/main.ts",
+    "build": "deno compile --allow-read --allow-write --output my-cli src/main.ts",
+    "fmt": "deno fmt --unstable-sql",
+    "compile": "deno compile --allow-read --allow-write --output build/api-lens src/main.ts",
+    "compile-mac-intel": "deno compile --allow-read --allow-write --output build/api-lens-mac-intel --target x86_64-apple-darwin src/main.ts",
+    "compile-mac-arm": "deno compile --allow-read --allow-write --output build/api-lens-mac-arm --target aarch64-apple-darwin src/main.ts"
+  },
+  "compilerOptions": {
+    "strict": true
+  },
+  "imports": {
+    "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.8",
+    "cliffy": "npm:cliffy@^2.5.1"
+  }
+}
