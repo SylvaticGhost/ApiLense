@@ -1,0 +1,40 @@
+name: test
+
+on:
+  push:
+    branches: [ "dev", "dev-v*.*.*", "*-fix-*" ]
+  pull_request:
+    branches: [ "dev", "dev-v*.*.*" ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      checks: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.4.4
+
+      - name: Type check
+        run: deno check --no-lock
+
+      - name: Run all tests and generate JUnit XML
+        run: deno test --allow-read --allow-write --allow-env --allow-net --no-lock --quiet --reporter=junit > test-results.xml
+
+      - name: Publish test results to GitHub
+        uses: dorny/test-reporter@v1
+        with:
+          name: test report
+          path: test-results.xml
+          reporter: java-junit
+          fail-on-error: false
+          fail-on-empty: true

@@ -1,12 +1,10 @@
-import { ensureDir } from "ensureDir";
-import { DB as Sqlite3DB } from "Sqlite3DB";
+import { Database } from "@db/sqlite";
+import { ensureDir } from "@std/fs";
 
-// Create volume and schemas folders
 await ensureDir("volume/schemas");
 
-// Create SQLite DB file in volume folder
 const dbPath = "volume/apilens.db";
-const db = new Sqlite3DB(dbPath);
+const db = new Database(dbPath);
 
 db.close();
 
