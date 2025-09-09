@@ -5,13 +5,16 @@
     "fmt": "deno fmt --unstable-sql",
     "compile": "deno compile --allow-read --allow-write --output build/api-lens src/main.ts",
     "compile-mac-intel": "deno compile --allow-read --allow-write --output build/api-lens-mac-intel --target x86_64-apple-darwin src/main.ts",
-    "compile-mac-arm": "deno compile --allow-read --allow-write --output build/api-lens-mac-arm --target aarch64-apple-darwin src/main.ts"
+    "compile-mac-arm": "deno compile --allow-read --allow-write --output build/api-lens-mac-arm --target aarch64-apple-darwin src/main.ts",
+    "init-db": "deno run --allow-read --allow-write script/init-db.ts"
   },
   "compilerOptions": {
     "strict": true
   },
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.8",
-    "cliffy": "npm:cliffy@^2.5.1"
+    "cliffy": "npm:cliffy@^2.5.1",
+    "ensureDir": "https://deno.land/std@0.204.0/fs/ensure_dir.ts",
+    "Sqlite3DB": "https://deno.land/x/sqlite3@0.9.1/mod.ts"
   }
 }
