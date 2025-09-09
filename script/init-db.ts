@@ -8,13 +8,6 @@ await ensureDir("volume/schemas");
 const dbPath = "volume/apilens.db";
 const db = new Sqlite3DB(dbPath);
 
-db.execute(`
-  CREATE TABLE IF NOT EXISTS example (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT
-  );
-`);
-
 db.close();
 
 console.log("Database initialized at", dbPath);
