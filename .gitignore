@@ -18,6 +18,7 @@ dist/
 .cache/
 coverage/
 /volume
+volume/
 /offtop
 
 # Build output
