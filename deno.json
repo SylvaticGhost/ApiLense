@@ -12,9 +12,11 @@
     "strict": true
   },
   "imports": {
+    "@db/sqlite": "jsr:@db/sqlite",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.8",
     "cliffy": "npm:cliffy@^2.5.1",
-    "ensureDir": "https://deno.land/std@0.204.0/fs/ensure_dir.ts",
-    "Sqlite3DB": "https://deno.land/x/sqlite3@0.9.1/mod.ts"
+    "@std/fs": "jsr:@std/fs",
+    "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
   }
+
 }
