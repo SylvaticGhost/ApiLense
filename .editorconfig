@@ -1,0 +1,59 @@
+# EditorConfig: https://editorconfig.org
+# Sensible defaults for a Deno (TS/JS) project
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+max_line_length = 80
+
+# Source files (Deno favors ESM and TS/JS)
+[*.{ts,tsx,js,jsx,mts,mjs,cts,cjs}]
+indent_style = space
+indent_size = 2
+
+# Deno config files
+[{deno.json,deno.jsonc}]
+indent_style = space
+indent_size = 2
+
+# JSON / JSONC
+[*.json]
+indent_style = space
+indent_size = 2
+
+[*.jsonc]
+indent_style = space
+indent_size = 2
+
+# YAML (CI, configs)
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Markdown (keep trailing spaces for hard line breaks)
+[*.md]
+trim_trailing_whitespace = false
+
+# Shell scripts
+[*.{sh,bash,zsh}]
+indent_style = space
+indent_size = 2
+
+# Makefiles require tabs
+[Makefile]
+indent_style = tab
+
+# TOML (lockfiles, config)
+[*.toml]
+indent_style = space
+indent_size = 2
+
+# SVG (binary-ish text assets; avoid auto final newline)
+[*.svg]
+insert_final_newline = false
