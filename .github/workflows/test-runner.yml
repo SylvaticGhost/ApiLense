@@ -2,9 +2,9 @@ name: test
 
 on:
   push:
-    branches: [ "dev", "dev-v*.*.*", "*-fix-*" ]
+    branches: ['dev', 'dev-v*.*.*', '*-fix-*']
   pull_request:
-    branches: [ "dev", "dev-v*.*.*" ]
+    branches: ['dev', 'dev-v*.*.*']
 
 jobs:
   tests:

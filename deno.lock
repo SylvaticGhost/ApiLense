@@ -19,7 +19,9 @@
     "jsr:@std/path@1": "1.1.2",
     "jsr:@std/path@^1.1.1": "1.1.2",
     "jsr:@std/text@~1.0.7": "1.0.16",
-    "npm:@types/node@*": "24.2.0"
+    "npm:@types/node@*": "24.2.0",
+    "npm:cliffy@^2.5.1": "2.5.1",
+    "npm:prettier@*": "3.6.2"
   },
   "jsr": {
     "@cliffy/command@1.0.0-rc.8": {
@@ -105,8 +107,57 @@
         "undici-types"
       ]
     },
+    "@types/node@6.14.13": {
+      "integrity": "sha512-J1F0XJ/9zxlZel5ZlbeSuHW2OpabrUAqpFuC2sm2I3by8sERQ8+KCjNKUcq8QHuzpGMWiJpo9ZxeHrqrP2KzQw=="
+    },
+    "ansi-regex@5.0.1": {
+      "integrity": "sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ=="
+    },
+    "cliffy@2.5.1": {
+      "integrity": "sha512-szBLhc1trGo/7f0MQNheMEqq7AUATu1D1y8sj79jGzmpZKwvz1K4jJ0ne4KpneNA+khm3Ws/a9ol53qBtU2TSA==",
+      "dependencies": [
+        "@types/node@6.14.13",
+        "columnify",
+        "indent"
+      ]
+    },
+    "clone@1.0.4": {
+      "integrity": "sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg=="
+    },
+    "columnify@1.6.0": {
+      "integrity": "sha512-lomjuFZKfM6MSAnV9aCZC9sc0qGbmZdfygNv+nCpqVkSKdCxCklLtd16O0EILGkImHw9ZpHkAnHaB+8Zxq5W6Q==",
+      "dependencies": [
+        "strip-ansi",
+        "wcwidth"
+      ]
+    },
+    "defaults@1.0.4": {
+      "integrity": "sha512-eFuaLoy/Rxalv2kr+lqMlUnrDWV+3j4pljOIJgLIhI058IQfWJ7vXhyEIHu+HtC738klGALYxOKDO0bQP3tg8A==",
+      "dependencies": [
+        "clone"
+      ]
+    },
+    "indent@0.0.2": {
+      "integrity": "sha512-/F1w9/msSQCfXDTvEU8rKBObcv4cBN6m8hujC/zwVc8vOuf4b76AwBVGChbg+3o0M3kp1XDjoMDQR5Nh6SAHfA=="
+    },
+    "prettier@3.6.2": {
+      "integrity": "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==",
+      "bin": true
+    },
+    "strip-ansi@6.0.1": {
+      "integrity": "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==",
+      "dependencies": [
+        "ansi-regex"
+      ]
+    },
     "undici-types@7.10.0": {
       "integrity": "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="
+    },
+    "wcwidth@1.0.1": {
+      "integrity": "sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==",
+      "dependencies": [
+        "defaults"
+      ]
     }
   },
   "redirects": {

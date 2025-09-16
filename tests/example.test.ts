@@ -1,5 +1,5 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from '@std/assert';
 
-Deno.test("work test", () => {
-    assertEquals(1 + 1, 2);
+Deno.test('work test', () => {
+  assertEquals(1 + 1, 2);
 });
