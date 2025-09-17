@@ -1,5 +1,6 @@
 import { Command } from '@cliffy/command';
 import { HelpCommand } from '@cliffy/command/help';
+import "reflect-metadata";
 
 await new Command()
   .name('ApiLens')
@@ -12,6 +13,8 @@ await new Command()
   .description('Load an API schema')
   .option('-f, --file <file:string>', 'Path to the schema file')
   .option('-u, --url <url:string>', 'URL of the schema')
+  .option('-n, --name <name:string>', 'Name of the schema')
+  .option('-g, --group <group:string>', 'Group to assign the schema to')
   .action((options) => {
     console.log('Loading schema from:', options.file ?? options.url);
   })

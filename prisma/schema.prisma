@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./volume/apilens.db"
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  color     String
+  Schemas   Schema[]
+}
+
+model Schema {
+  id        Int             @id @default(autoincrement())
+  name      String          @unique
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  url       String
+  groupId   Int             @map("group_id")
+  Group     Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  lastUsed  SchemaLastUsed?
+
+  @@unique([id, groupId])
+  @@map("api_schemas")
+}
+
+model SchemaLastUsed {
+  schemaId Int      @id @map("schema_id")
+  lastUsed DateTime @default(now()) @map("last_used_at")
+  Schema   Schema   @relation(fields: [schemaId], references: [id])
+}
