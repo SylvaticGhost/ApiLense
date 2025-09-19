@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run --allow-read --allow-write src/main.ts",
+    "dev": "deno run --allow-read --allow-write --allow-env --env-file=.env --allow-net --allow-ffi src/main.ts",
     "build": "deno compile --allow-read --allow-write --output my-cli src/main.ts",
     "lint": "deno lint",
     "lint:fix": "deno lint --fix",
@@ -9,7 +9,8 @@
     "compile": "deno compile --allow-read --allow-write --output build/api-lens src/main.ts",
     "compile-mac-intel": "deno compile --allow-read --allow-write --output build/api-lens-mac-intel --target x86_64-apple-darwin src/main.ts",
     "compile-mac-arm": "deno compile --allow-read --allow-write --output build/api-lens-mac-arm --target aarch64-apple-darwin src/main.ts",
-    "init-db": "deno run --allow-read --allow-write script/init-db.ts"
+    "init-db": "deno run --allow-read --allow-write --allow-env --allow-ffi script/init-db.ts",
+    "prisma-generate": "deno run -A npm:prisma@latest generate"
   },
   "compilerOptions": {
     "strict": true
@@ -17,9 +18,11 @@
   "imports": {
     "@db/sqlite": "jsr:@db/sqlite",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.8",
+    "@prisma/client": "npm:@prisma/client@^6.16.2",
     "cliffy": "npm:cliffy@^2.5.1",
     "@std/fs": "jsr:@std/fs",
-    "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
+    "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts",
+    "prisma": "npm:prisma@^6.16.2"
   },
   "lint": {
     "files": {

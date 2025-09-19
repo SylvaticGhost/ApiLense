@@ -1,5 +1,13 @@
 import { Command } from '@cliffy/command';
 import { HelpCommand } from '@cliffy/command/help';
+import { DependencyContainer } from './infrastructure/dependencyContainer.ts';
+import { DependencyRegistration } from './infrastructure/dependencyRegistration.ts';
+import { SchemaService } from './services/schemaService.ts';
+import { SchemaCommandPrinters } from './utils/printers/schemaCommandPrinters.ts';
+
+const container = new DependencyContainer();
+const registrator = new DependencyRegistration(container);
+await registrator.registerAll();
 
 await new Command()
   .name('ApiLens')
@@ -12,8 +20,19 @@ await new Command()
   .description('Load an API schema')
   .option('-f, --file <file:string>', 'Path to the schema file')
   .option('-u, --url <url:string>', 'URL of the schema')
-  .action((options) => {
-    console.log('Loading schema from:', options.file ?? options.url);
+  .option('-n, --name <name:string>', 'Name of the schema')
+  .option('-g, --group <group:string>', 'Group to assign the schema to')
+  .action(async (options) => {
+    const schemaService = container.resolve<SchemaService>('SchemaService');
+    const args = {
+      file: options.file,
+      url: options.url,
+      name: options.name,
+      group: options.group,
+    };
+    const result = await schemaService.loadSchema(args);
+
+    SchemaCommandPrinters.loadSchema(result);
   })
   // schema-list
   .command('schema-list', 'List all loaded schemas')

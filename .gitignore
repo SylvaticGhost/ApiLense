@@ -24,3 +24,6 @@ coverage/
 /build
 *.exe
 *.dll
+
+/prisma/generated
+test-results.xml
