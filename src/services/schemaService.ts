@@ -66,7 +66,6 @@ export class SchemaService {
     await this.schemaFileRepo.writeSchemaFile(schemaName, content);
 
     const schema = fabricFunc(newSchemaId, schemaName, groupId, input);
-
     await this.schemaRepo.save(schema);
 
     return Result.success(newSchemaId);
