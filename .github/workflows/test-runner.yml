@@ -24,6 +24,14 @@ jobs:
         with:
           deno-version: v2.4.4
 
+      - name: Set env
+        run: |
+          echo "SCHEMA_LOCATION="./volume/schema"" >> $GITHUB_ENV
+          echo "DATABASE_URL="file:./volume/dev.db"" >> $GITHUB_ENV
+
+      - name: Load prisma
+        run: deno task prisma-generate
+
       - name: Type check
         run: deno check --no-lock
 

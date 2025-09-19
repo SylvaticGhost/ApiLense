@@ -26,7 +26,13 @@ export class DependencyRegistration {
     );
 
     this.container.register(
-      () => new SchemaFileRepository(),
+      () => {
+        const location = Deno.env.get('SCHEMA_LOCATION')
+        if (!location) {
+          throw new Error('SCHEMA_LOCATION is not set');
+        }
+        return new SchemaFileRepository(location);
+      },
       'SchemaFileRepository',
     );
 
