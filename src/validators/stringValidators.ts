@@ -2,7 +2,14 @@ import { Result } from "../utils/result.ts";
 
 export class StringValidators {
   static validateSwaggerUrl(url: string): Result {
-    //TODO: @SofiaDivine Implement URL validation logic
+    if(!url || url.trim() === "")
+      return Result.badRequest("URL cannot be empty");
+
+    const lastPart = url.split('/').pop();
+    if (!lastPart || (!lastPart.endsWith('.json') && !lastPart.endsWith('.yaml') && !lastPart.endsWith('.yml'))) {
+      return Result.badRequest("URL must point to a .json, .yaml, or .yml file");
+    }
+
     return Result.success();
   }
 

@@ -20,6 +20,7 @@ export class SchemaService {
         args,
         StringValidators.validateSwaggerUrl,
         this.schemaFileRepo.getSchemaJsonFromUrl,
+        ApiSchema.createByUrl,
       );
     } else if (args.file) {
       return await this.loadSchemaFromSource(
@@ -27,6 +28,7 @@ export class SchemaService {
         args,
         StringValidators.validateFilePath,
         this.schemaFileRepo.getSchemaJsonFromFile,
+        ApiSchema.createByFile,
       );
     } else {
       return Result.failure('Either url or file must be provided', 400);
@@ -38,6 +40,7 @@ export class SchemaService {
     args: LoadSchemaArgs,
     validationFunc: (input: string) => Result,
     retrievalFunc: (input: string) => Promise<string>,
+    fabricFunc: (id: number, name: string, groupId: number | undefined, source: string) => ApiSchema,
   ): Promise<Result> {
     const validationResult = validationFunc(input);
     if (validationResult.isFailure()) {
@@ -62,15 +65,7 @@ export class SchemaService {
 
     await this.schemaFileRepo.writeSchemaFile(schemaName, content);
 
-    const url = this.extractApiUrl(args.url, content);
-    const schema = new ApiSchema(
-      newSchemaId,
-      schemaName,
-      url,
-      new Date(),
-      new Date(),
-      groupId,
-    );
+    const schema = fabricFunc(newSchemaId, schemaName, groupId, input);
 
     await this.schemaRepo.save(schema);
 
@@ -99,10 +94,5 @@ export class SchemaService {
       groupId = group.id;
     }
     return Result.success(groupId);
-  }
-
-  //TODO: @SofiaDivine Add extractor of API url from given url or content
-  private extractApiUrl(url?: string, content?: string): string {
-    return url ?? '';
   }
 }
