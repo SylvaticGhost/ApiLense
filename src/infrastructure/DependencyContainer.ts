@@ -1,6 +1,10 @@
 import {PrismaClient} from "../../prisma/generated/client.ts";
 
-export class DependencyContainer {
+export interface DependencyProvider {
+  resolve<TInstance>(name: string) : TInstance;
+}
+
+export class DependencyContainer implements DependencyProvider {
   constructor() {}
 
   private _map = new Map<string, any>();

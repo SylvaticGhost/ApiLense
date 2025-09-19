@@ -4,6 +4,8 @@ import { DependencyContainer } from "./infrastructure/DependencyContainer.ts";
 import {
   DependencyRegistration
 } from "./infrastructure/dependencyRegistration.ts";
+import {SchemaService} from "./services/schema-service.ts";
+import {SchemaCommandPrinters} from "./utils/printers/SchemaCommandPrinters.ts";
 
 const container = new DependencyContainer();
 const registrator = new DependencyRegistration(container);
@@ -22,8 +24,17 @@ await new Command()
   .option("-u, --url <url:string>", "URL of the schema")
   .option("-n, --name <name:string>", "Name of the schema")
   .option("-g, --group <group:string>", "Group to assign the schema to")
-  .action((options) => {
-    console.log("Loading schema from:", options.file ?? options.url);
+  .action(async (options) => {
+    const schemaService = container.resolve<SchemaService>("SchemaService");
+    const args = {
+      file: options.file,
+      url: options.url,
+      name: options.name,
+      group: options.group,
+    }
+    const result =  await schemaService.loadSchema(args);
+
+    SchemaCommandPrinters.loadSchema(result);
   })
   // schema-list
   .command("schema-list", "List all loaded schemas")
