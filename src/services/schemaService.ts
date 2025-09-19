@@ -4,7 +4,7 @@ import { StringValidators } from '../validators/stringValidators.ts';
 import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
 import { GroupRepository } from '../repositories/groupRepo.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
-import { ApiSchema } from '../core/ApiSchema.ts';
+import { ApiSchema } from '../core/apiSchema.ts';
 
 export class SchemaService {
   constructor(

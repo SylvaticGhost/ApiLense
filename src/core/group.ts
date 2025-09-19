@@ -1,4 +1,4 @@
-import { ApiSchema } from './ApiSchema.ts';
+import { ApiSchema } from './apiSchema.ts';
 
 export class Group {
   id: number;

@@ -26,3 +26,4 @@ coverage/
 *.dll
 
 /prisma/generated
+test-results.xml

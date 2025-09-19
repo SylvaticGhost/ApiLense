@@ -1,4 +1,4 @@
-import { ApiSchema } from '../core/ApiSchema.ts';
+import { ApiSchema } from '../core/apiSchema.ts';
 import { PrismaClient } from '../../prisma/generated/client.ts';
 
 export class SchemaRepository {
@@ -9,7 +9,8 @@ export class SchemaRepository {
       data: {
         id: schema.id,
         name: schema.name,
-        url: schema.url,
+        url: schema.url ?? '',
+        filePath: schema.filePath ?? '',
         createdAt: schema.createdAt,
         updatedAt: schema.updatedAt,
         groupId: schema.groupId ?? 0,

@@ -30,12 +30,13 @@ export class DependencyRegistration {
       'SchemaFileRepository',
     );
 
-    this.container.register((c) => {
+    this.container.register((c : DependencyContainer): SchemaService => {
       const groupRepo = c.resolve<GroupRepository>('GroupRepository');
       const schemaRepo = c.resolve<SchemaRepository>('SchemaRepository');
       const schemaFileRepo = c.resolve<SchemaFileRepository>(
         'SchemaFileRepository',
       );
+
       return new SchemaService(schemaFileRepo, groupRepo, schemaRepo);
     }, 'SchemaService');
   }

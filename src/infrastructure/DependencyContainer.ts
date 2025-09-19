@@ -10,7 +10,11 @@ export class DependencyContainer implements DependencyProvider {
   private _map = new Map<string, any>();
 
   resolve<TInstance>(name: string) : TInstance {
-    return this._map.get(name);
+    const instance = this._map.get(name);
+    if (!instance) {
+      throw new Error(`Dependency not found: ${name}`);
+    }
+    return instance as TInstance;
   }
 
   register<TInstance>(func: (container: DependencyContainer) => TInstance, name: string) {
