@@ -1,9 +1,8 @@
-import {ApiSchema} from "../core/api-schema.ts";
-import {PrismaClient} from "../../prisma/generated/client.ts";
+import { ApiSchema } from '../core/ApiSchema.ts';
+import { PrismaClient } from '../../prisma/generated/client.ts';
 
 export class SchemaRepository {
-  constructor(private readonly prismaClient: PrismaClient) {
-  }
+  constructor(private readonly prismaClient: PrismaClient) {}
 
   async save(schema: ApiSchema) {
     await this.prismaClient.schema.create({
@@ -14,7 +13,7 @@ export class SchemaRepository {
         createdAt: schema.createdAt,
         updatedAt: schema.updatedAt,
         groupId: schema.groupId ?? 0,
-      }
+      },
     });
   }
 
@@ -29,7 +28,7 @@ export class SchemaRepository {
 
   async lastId(): Promise<number> {
     const last = await this.prismaClient.schema.findFirst({
-      orderBy: { id: "desc" },
+      orderBy: { id: 'desc' },
     });
     return last?.id ?? 0;
   }

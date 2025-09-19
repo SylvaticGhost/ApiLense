@@ -1,5 +1,5 @@
-import { Group } from "./group.ts";
-import { SchemaLastUsing } from "./schema-last-using.ts";
+import { Group } from './group.ts';
+import { SchemaLastUsing } from './schemaLastUsing.ts';
 
 export class ApiSchema {
   id: number;

@@ -1,9 +1,9 @@
-import { GroupRepository } from "../repositories/group-repo.ts";
-import { SchemaRepository } from "../repositories/schema-repo.ts";
-import { SchemaFileRepository } from "../repositories/schema-file-repo.ts";
-import { DependencyContainer } from "./DependencyContainer.ts";
-import { SchemaService } from "../services/schema-service.ts";
-import { PrismaClient } from "../../prisma/generated/client.ts";
+import { GroupRepository } from '../repositories/groupRepo.ts';
+import { SchemaRepository } from '../repositories/schemaRepo.ts';
+import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
+import { DependencyContainer } from './dependencyContainer.ts';
+import { SchemaService } from '../services/schemaService.ts';
+import { PrismaClient } from '../../prisma/generated/client.ts';
 
 export class DependencyRegistration {
   constructor(private readonly container: DependencyContainer) {}
@@ -13,33 +13,30 @@ export class DependencyRegistration {
       const prismaClient = new PrismaClient();
       await prismaClient.$connect();
       return prismaClient;
-    }, "PrismaClient");
+    }, 'PrismaClient');
 
     this.container.registerDbRepo(
       (c) => new GroupRepository(c),
-      "GroupRepository",
+      'GroupRepository',
     );
 
     this.container.registerDbRepo(
       (c) => new SchemaRepository(c),
-      "SchemaRepository",
+      'SchemaRepository',
     );
 
     this.container.register(
       () => new SchemaFileRepository(),
-      "SchemaFileRepository",
+      'SchemaFileRepository',
     );
 
-    this.container.register(
-      (c) => {
-        const groupRepo = c.resolve<GroupRepository>("GroupRepository");
-        const schemaRepo = c.resolve<SchemaRepository>("SchemaRepository");
-        const schemaFileRepo = c.resolve<SchemaFileRepository>(
-          "SchemaFileRepository",
-        );
-        return new SchemaService(schemaFileRepo, groupRepo, schemaRepo);
-      },
-      "SchemaService",
-    );
+    this.container.register((c) => {
+      const groupRepo = c.resolve<GroupRepository>('GroupRepository');
+      const schemaRepo = c.resolve<SchemaRepository>('SchemaRepository');
+      const schemaFileRepo = c.resolve<SchemaFileRepository>(
+        'SchemaFileRepository',
+      );
+      return new SchemaService(schemaFileRepo, groupRepo, schemaRepo);
+    }, 'SchemaService');
   }
 }

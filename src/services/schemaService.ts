@@ -1,26 +1,35 @@
-import { LoadSchemaArgs } from "../contracts/SchemaCommandsContracts.ts";
-import { Result } from "../utils/result.ts";
-import { StringValidators } from "../validators/string-validators.ts";
-import { SchemaFileRepository } from "../repositories/schema-file-repo.ts";
-import { GroupRepository } from "../repositories/group-repo.ts";
-import { SchemaRepository } from "../repositories/schema-repo.ts";
-import { ApiSchema } from "../core/api-schema.ts";
+import { LoadSchemaArgs } from '../contracts/schemaCommandsArgs.ts';
+import { Result } from '../utils/result.ts';
+import { StringValidators } from '../validators/stringValidators.ts';
+import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
+import { GroupRepository } from '../repositories/groupRepo.ts';
+import { SchemaRepository } from '../repositories/schemaRepo.ts';
+import { ApiSchema } from '../core/ApiSchema.ts';
 
 export class SchemaService {
   constructor(
     private readonly schemaFileRepo: SchemaFileRepository,
     private readonly groupRepo: GroupRepository,
     private readonly schemaRepo: SchemaRepository,
-  ) {
-  }
+  ) {}
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
     if (args.url) {
-      return await this.loadSchemaFromSource(args.url, args, StringValidators.validateSwaggerUrl, this.schemaFileRepo.getSchemaJsonFromUrl)
+      return await this.loadSchemaFromSource(
+        args.url,
+        args,
+        StringValidators.validateSwaggerUrl,
+        this.schemaFileRepo.getSchemaJsonFromUrl,
+      );
     } else if (args.file) {
-      return await this.loadSchemaFromSource(args.file, args, StringValidators.validateFilePath, this.schemaFileRepo.getSchemaJsonFromFile)
+      return await this.loadSchemaFromSource(
+        args.file,
+        args,
+        StringValidators.validateFilePath,
+        this.schemaFileRepo.getSchemaJsonFromFile,
+      );
     } else {
-      return Result.failure("Either url or file must be provided", 400);
+      return Result.failure('Either url or file must be provided', 400);
     }
   }
 
@@ -44,10 +53,8 @@ export class SchemaService {
 
     const groupId = groupCheckResult.castValue<number>() ?? undefined;
 
-    if (args.name && await this.schemaRepo.isNameUsed(args.name)) {
-      return Result.badRequest(
-        `Schema with name ${args.name} already exists`,
-      );
+    if (args.name && (await this.schemaRepo.isNameUsed(args.name))) {
+      return Result.badRequest(`Schema with name ${args.name} already exists`);
     }
 
     const newSchemaId = (await this.schemaRepo.lastId()) + 1;
@@ -96,6 +103,6 @@ export class SchemaService {
 
   //TODO: @SofiaDivine Add extractor of API url from given url or content
   private extractApiUrl(url?: string, content?: string): string {
-    return url ?? "";
+    return url ?? '';
   }
 }

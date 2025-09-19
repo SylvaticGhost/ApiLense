@@ -1,4 +1,4 @@
-import {ApiSchema} from "./api-schema.ts";
+import { ApiSchema } from './ApiSchema.ts';
 
 export class Group {
   id: number;
@@ -8,7 +8,14 @@ export class Group {
   updatedAt: Date;
   Schemas: ApiSchema[];
 
-  constructor(id: number, name: string, createdAt: Date, updatedAt: Date, color?: string, schemas?: ApiSchema[]) {
+  constructor(
+    id: number,
+    name: string,
+    createdAt: Date,
+    updatedAt: Date,
+    color?: string,
+    schemas?: ApiSchema[],
+  ) {
     this.id = id;
     this.name = name;
     this.color = color;

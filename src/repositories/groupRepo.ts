@@ -1,12 +1,11 @@
-import { Group } from "../core/group.ts";
-import {PrismaClient} from "../../prisma/generated/client.ts";
+import { Group } from '../core/group.ts';
+import { PrismaClient } from '../../prisma/generated/client.ts';
 
 export class GroupRepository {
-  constructor(private readonly prismaClient: PrismaClient) {
-  }
+  constructor(private readonly prismaClient: PrismaClient) {}
 
   async exists(groupId: number): Promise<boolean> {
-    return await this.getByIdQuery(groupId) !== null;
+    return (await this.getByIdQuery(groupId)) !== null;
   }
 
   async getByName(name: string): Promise<Group | null> {
@@ -18,14 +17,14 @@ export class GroupRepository {
     return await this.prismaClient.group.findFirst({
       where: { id: groupId },
       select: { id: true },
-    })
+    });
   }
 
   private async getByNameQuery(name: string) {
     return await this.prismaClient.group.findFirst({
       where: { name },
       select: { id: true },
-    })
+    });
   }
 
   private mapToDomain(raw: any) {
@@ -40,6 +39,6 @@ export class GroupRepository {
       raw.updatedAt,
       raw.color,
       raw.Schemas,
-    )
+    );
   }
 }
