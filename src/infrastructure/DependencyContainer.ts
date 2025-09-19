@@ -1,13 +1,27 @@
+import {PrismaClient} from "../../prisma/generated/client.ts";
+
 export class DependencyContainer {
   constructor() {}
 
   private _map = new Map<string, any>();
 
-  registerInstance<T>(key: string, instance: T): void {
-    this._map.set(key, instance);
+  resolve<TInstance>(name: string) : TInstance {
+    return this._map.get(name);
   }
 
-  register<T, TInterface>() : void {
+  register<TInstance>(func: (container: DependencyContainer) => TInstance, name: string) {
+    const instance = func(this);
+    this._map.set(name, instance);
+  }
 
+  registerDbRepo<TRepository>(func: (prismaClient: PrismaClient) => TRepository, name: string) {
+    const prismaClient = this.resolve<PrismaClient>('PrismaClient');
+    const instance = func(prismaClient);
+    this._map.set(name, instance);
+  }
+
+  async registerAsync<TInstance>(func: (container: DependencyContainer) => Promise<TInstance>, name: string) : Promise<void> {
+    const instance = await func(this);
+    this._map.set(name, instance);
   }
 }

@@ -24,3 +24,5 @@ coverage/
 /build
 *.exe
 *.dll
+
+/prisma/generated

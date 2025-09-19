@@ -5,12 +5,14 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "./generated"
+  runtime  = "deno"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./volume/apilens.db"
+  url      = env("DATABASE_URL")
 }
 
 model Group {

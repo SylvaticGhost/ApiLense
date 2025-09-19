@@ -1,5 +1,5 @@
-import {PrismaClient} from "@prisma/client";
 import { Group } from "../core/group.ts";
+import {PrismaClient} from "../../prisma/generated/client.ts";
 
 export class GroupRepository {
   constructor(private readonly prismaClient: PrismaClient) {

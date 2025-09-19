@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import {ApiSchema} from "../core/api-schema.ts";
+import {PrismaClient} from "../../prisma/generated/client.ts";
 
 export class SchemaRepository {
   constructor(private readonly prismaClient: PrismaClient) {
