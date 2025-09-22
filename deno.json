@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run --allow-read --allow-write --allow-env --env-file=.env --allow-net --allow-ffi src/main.ts",
+    "dev": "deno run --allow-read --allow-write --allow-env --env-file=.env --allow-net --allow-ffi --allow-sys src/main.ts",
     "build": "deno compile --allow-read --allow-write --output my-cli src/main.ts",
     "lint": "deno lint",
     "lint:fix": "deno lint --fix",
