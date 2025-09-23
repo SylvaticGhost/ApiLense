@@ -1,6 +1,7 @@
 {
+  "nodeModulesDir": "auto",
   "tasks": {
-    "dev": "deno run --allow-read --allow-write --allow-env --env-file=.env --allow-net --allow-ffi src/main.ts",
+    "dev": "deno run --allow-read --allow-write --allow-env --env-file=.env --allow-net --allow-ffi --allow-sys src/main.ts",
     "build": "deno compile --allow-read --allow-write --output my-cli src/main.ts",
     "lint": "deno lint",
     "lint:fix": "deno lint --fix",
@@ -10,7 +11,10 @@
     "compile-mac-intel": "deno compile --allow-read --allow-write --output build/api-lens-mac-intel --target x86_64-apple-darwin src/main.ts",
     "compile-mac-arm": "deno compile --allow-read --allow-write --output build/api-lens-mac-arm --target aarch64-apple-darwin src/main.ts",
     "init-db": "deno run --allow-read --allow-write --allow-env --allow-ffi script/init-db.ts",
-    "prisma-generate": "deno run -A npm:prisma@latest generate"
+    "prisma-generate": "deno run -A npm:prisma@latest generate",
+    "precommit": "deno task fmt && deno task lint",
+    "precommit:fix": "deno task fmt && deno task lint:fix",
+    "hook": "deno run --allow-read --allow-run --allow-write https://deno.land/x/deno_hooks@0.1.1/mod.ts"
   },
   "compilerOptions": {
     "strict": true
