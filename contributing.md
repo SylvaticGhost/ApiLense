@@ -7,3 +7,10 @@ To master brunch is merged with fetures by PR from developing version brunches(d
 ## Developing brunches
 
 For each version creates new dev brunch from master with version indexing and name looks like dev-v.X.X.X. In developing cycle new feature are merged to respective version brunch by PR, merging require successful testing and code review.
+
+# Start working
+
+Run script from 'script' directory:
+
+- For Windows: setup-workspace.ps1
+- For Linux/Mac: setup-workspace.sh
