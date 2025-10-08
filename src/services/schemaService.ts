@@ -40,7 +40,12 @@ export class SchemaService {
     args: LoadSchemaArgs,
     validationFunc: (input: string) => Result,
     retrievalFunc: (input: string) => Promise<string>,
-    fabricFunc: (id: number, name: string, groupId: number | undefined, source: string) => ApiSchema,
+    fabricFunc: (
+      id: number,
+      name: string,
+      groupId: number | undefined,
+      source: string,
+    ) => ApiSchema,
   ): Promise<Result> {
     const validationResult = validationFunc(input);
     if (validationResult.isFailure()) {

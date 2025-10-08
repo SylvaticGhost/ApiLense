@@ -1,4 +1,4 @@
-export interface LoadSchemaArgs  {
+export interface LoadSchemaArgs {
   url?: string;
   file?: string;
   name?: string;
