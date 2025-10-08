@@ -25,18 +25,15 @@ export class DependencyRegistration {
       'SchemaRepository',
     );
 
-    this.container.register(
-      () => {
-        const location = Deno.env.get('SCHEMA_LOCATION')
-        if (!location) {
-          throw new Error('SCHEMA_LOCATION is not set');
-        }
-        return new SchemaFileRepository(location);
-      },
-      'SchemaFileRepository',
-    );
+    this.container.register(() => {
+      const location = Deno.env.get('SCHEMA_LOCATION');
+      if (!location) {
+        throw new Error('SCHEMA_LOCATION is not set');
+      }
+      return new SchemaFileRepository(location);
+    }, 'SchemaFileRepository');
 
-    this.container.register((c : DependencyContainer): SchemaService => {
+    this.container.register((c: DependencyContainer): SchemaService => {
       const groupRepo = c.resolve<GroupRepository>('GroupRepository');
       const schemaRepo = c.resolve<SchemaRepository>('SchemaRepository');
       const schemaFileRepo = c.resolve<SchemaFileRepository>(
