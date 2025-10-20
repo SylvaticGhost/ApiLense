@@ -12,6 +12,7 @@ export const HTTP_METHODS = {
 
 export type HttpMethod = ObjectValues<typeof HTTP_METHODS>;
 
+
 export const BODY_FIELD_TYPES = {
   INT: 'int',
   FLOAT: 'float',
@@ -21,3 +22,11 @@ export const BODY_FIELD_TYPES = {
 } as const;
 
 export type BodyFieldType = ObjectValues<typeof BODY_FIELD_TYPES>;
+
+export const BODY_FIELD_TYPE_MAP: Record<string, BodyFieldType> = {
+  int: BODY_FIELD_TYPES.INT,
+  float: BODY_FIELD_TYPES.FLOAT,
+  datetime: BODY_FIELD_TYPES.DATETIME,
+  string: BODY_FIELD_TYPES.STRING,
+  object: BODY_FIELD_TYPES.OBJECT,
+};

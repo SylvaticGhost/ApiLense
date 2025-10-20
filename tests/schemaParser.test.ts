@@ -1,71 +1,52 @@
 import { assertEquals } from '@std/assert';
-import { parseApiSchemaFromText } from '../src/mapper/schemaParser.ts';
-import { HTTP_METHODS } from '../src/core/constants.ts';
-
-const openApi = {
-  openapi: '1.0.0',
-  info: {
-    title: 'Test Api',
-    description: 'test',
-    version: 'v1',
-  },
-  paths: {
-    '/api/work': {
-      get: {
-        tags: ['App'],
-        summary: 'Health check endpoint',
-        description: 'For internal usage to check if the server is running',
-        operationId: 'work',
-        responses: {
-          200: {
-            description: 'OK',
-          },
-        },
-      },
-    },
-  },
-};
-
-function openApiToSimpleSchema(openApi: any) {
-  const endpoints: any[] = [];
-
-  for (const [path, methods] of Object.entries(openApi.paths)) {
-    for (const [method, def] of Object.entries(
-      methods as Record<string, any>,
-    )) {
-      const params =
-        def.parameters?.map((p: any) => ({
-          name: p.name,
-          type: p.schema?.type ?? 'string',
-          required: !!p.required,
-          description: p.description,
-        })) ?? [];
-
-      const name = def.operationId ?? `${method.toUpperCase()} ${path}`;
-
-      endpoints.push({
-        name,
-        method: method.toUpperCase(),
-        url: path,
-        params,
-      });
-    }
-  }
-
-  return { endpoints };
-}
+import { parseApiSchemaFromFile } from '../src/mapper/schemaParser.ts';
+import { ApiSchema } from '../src/core/apiSchema.ts';
+import { HTTP_METHODS } from '../src/core/enums.ts';
 
 Deno.test(
-  'parseApiSchemaFromText parses embedded OpenAPI schema correctly',
+  'parseApiSchemaFromFile parses full FunDay OpenAPI schema correctly',
   async () => {
-    const schema = openApiToSimpleSchema(openApi);
-    const endpoints = await parseApiSchemaFromText(JSON.stringify(schema));
-    assertEquals(endpoints.length, 1);
+    const schema = ApiSchema.createByFile(
+      1,
+      'FunDay Test Schema',
+      undefined,
+      './tests/content/testApiSchema.json',
+    );
 
-    const e = endpoints[0];
-    assertEquals(e.name, 'work');
-    assertEquals(e.method, HTTP_METHODS.GET);
-    assertEquals(e.path, '/api/work');
-    assertEquals(e.template.params.length, 0);
+    const endpoints = await parseApiSchemaFromFile(schema);
+
+    assertEquals(endpoints.length > 0, true);
+
+    const work = endpoints.find((e) => e.path === '/api/work');
+    const apply = endpoints.find(
+      (e) => e.path === '/api/application/{offerId}/apply',
+    );
+    const uploadAvatar = endpoints.find(
+      (e) => e.path === '/api/user/avatar/upload',
+    );
+    const offerCreate = endpoints.find((e) => e.path === '/api/offer/create');
+
+    // --- /api/work ---
+    assertEquals(work?.method, HTTP_METHODS.GET);
+    assertEquals(work?.name, 'work');
+    assertEquals(work?.template.params.length, 0);
+
+    // --- /api/application/{offerId}/apply ---
+    assertEquals(apply?.method, HTTP_METHODS.POST);
+    assertEquals(apply?.template.params.length, 1);
+    assertEquals(apply?.template.params[0].name, 'offerId');
+    assertEquals(apply?.template.params[0].type, 'string');
+    assertEquals(apply?.template.params[0].required, true);
+
+    // --- /api/user/avatar/upload ---
+    assertEquals(uploadAvatar?.method, HTTP_METHODS.POST);
+
+    // --- /api/offer/create ---
+    assertEquals(offerCreate?.method, HTTP_METHODS.POST);
+
+    console.log(
+      `Parsed ${endpoints.length} endpoints. Example:\n`,
+      JSON.stringify(offerCreate, null, 2),
+    );
   },
 );

@@ -1,4 +1,8 @@
-import { BODY_FIELD_TYPES, type BodyFieldType } from './constants.ts';
+import {
+  BODY_FIELD_TYPES,
+  BODY_FIELD_TYPE_MAP,
+  type BodyFieldType,
+} from './enums.ts';
 
 export type BodyFieldValueKind = 'object' | 'array';
 
@@ -36,14 +40,7 @@ export class BodyField {
     }
 
     const normalized = String(raw).toLowerCase();
-    const typeMap: Record<string, BodyFieldType> = {
-      int: BODY_FIELD_TYPES.INT,
-      float: BODY_FIELD_TYPES.FLOAT,
-      datetime: BODY_FIELD_TYPES.DATETIME,
-      string: BODY_FIELD_TYPES.STRING,
-      object: BODY_FIELD_TYPES.OBJECT,
-    };
-    const typing = typeMap[normalized] ?? BODY_FIELD_TYPES.STRING;
+    const typing = BODY_FIELD_TYPE_MAP[normalized] ?? BODY_FIELD_TYPES.STRING;
 
     return new BodyField(name, typing, 'object', []);
   }

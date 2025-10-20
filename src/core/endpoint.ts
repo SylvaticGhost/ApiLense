@@ -1,5 +1,5 @@
 import { Template } from './template.ts';
-import { HTTP_METHODS, type HttpMethod } from './constants.ts';
+import { HTTP_METHODS, type HttpMethod } from './enums.ts';
 
 export class Endpoint {
   name: string;
