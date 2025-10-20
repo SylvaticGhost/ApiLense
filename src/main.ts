@@ -4,9 +4,24 @@ import { DependencyContainer } from './infrastructure/dependencyContainer.ts';
 import { DependencyRegistration } from './infrastructure/dependencyRegistration.ts';
 import { SchemaService } from './services/schemaService.ts';
 import { SchemaCommandPrinters } from './utils/printers/schemaCommandPrinters.ts';
+import { listSchemasCommand } from "../volume/schemas/list.ts";
+
 
 const container = new DependencyContainer();
 const registrator = new DependencyRegistration(container);
+const schemaCommand = new Command()
+  .description("Manage schemas.")
+  .command("list", listSchemasCommand);
+
+const mainCommand = new Command()
+  .name("api-lens")
+  .version("0.1.0")
+  .description("CLI description.")
+  .command("schema", schemaCommand);
+
+if (import.meta.main) {
+  await mainCommand.parse(Deno.args);
+}
 await registrator.registerAll();
 
 await new Command()
