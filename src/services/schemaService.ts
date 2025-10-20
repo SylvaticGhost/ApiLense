@@ -49,12 +49,9 @@ export class SchemaService {
 
     const content = await retrievalFunc(input);
 
-    const groupCheckResult = await this.CheckGroupExists(args.group);
-    if (groupCheckResult.isFailure()) {
-      return groupCheckResult;
-    }
-
-    const groupId = groupCheckResult.castValue<number>() ?? undefined;
+  const groupName = args.group ?? 'Default';
+    const group = await this.groupRepo.findOrCreate({ name: groupName, color: 'default' });
+    const groupId = group.id;
 
     if (args.name && (await this.schemaRepo.isNameUsed(args.name))) {
       return Result.badRequest(`Schema with name ${args.name} already exists`);
@@ -66,9 +63,10 @@ export class SchemaService {
     await this.schemaFileRepo.writeSchemaFile(schemaName, content);
 
     const schema = fabricFunc(newSchemaId, schemaName, groupId, input);
-    await this.schemaRepo.save(schema);
 
-    return Result.success(newSchemaId);
+    const savedSchema = await this.schemaRepo.save(schema);
+
+    return Result.success({ id: savedSchema.id });
   }
 
   private async CheckGroupExists(

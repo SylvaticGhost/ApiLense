@@ -1,11 +1,15 @@
 import { ApiSchema } from '../core/apiSchema.ts';
 import { PrismaClient } from '../../prisma/generated/client.ts';
+import { SchemaFileRepository } from "./schemaFileRepo.ts";
+import { GroupRepository } from "./groupRepo.ts";
 
 export class SchemaRepository {
+  private schemaRepo!: SchemaFileRepository;
+  private groupRepo!: GroupRepository;
   constructor(private readonly prismaClient: PrismaClient) {}
 
   async save(schema: ApiSchema) {
-    await this.prismaClient.schema.create({
+    return await this.prismaClient.schema.create({
       data: {
         id: schema.id,
         name: schema.name,
@@ -14,6 +18,8 @@ export class SchemaRepository {
         createdAt: schema.createdAt,
         updatedAt: schema.updatedAt,
         groupId: schema.groupId ?? 0,
+        sourceType: schema.sourceType,
+        source: schema.source,
       },
     });
   }

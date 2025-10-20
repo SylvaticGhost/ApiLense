@@ -11,6 +11,8 @@ export class ApiSchema {
   url?: string;
   filePath?: string;
   lastUsing?: SchemaLastUsing;
+  source: any;
+  sourceType: any;
 
   constructor(
     id: number,
@@ -35,10 +37,16 @@ export class ApiSchema {
   }
 
   static createByUrl(id: number, name: string, groupId: number | undefined, url: string) {
-    return new ApiSchema(id, name, new Date(), new Date(), groupId, url);
+    const schema = new ApiSchema(id, name, new Date(), new Date(), groupId, url);
+    schema.sourceType = 'URL';
+    schema.source = url;
+    return schema;
   }
 
   static createByFile(id: number, name: string, groupId: number | undefined, filePath: string) {
-    return new ApiSchema(id, name, new Date(), new Date(), groupId, undefined, filePath);
+    const schema = new ApiSchema(id, name, new Date(), new Date(), groupId, undefined, filePath);
+    schema.sourceType = 'FILE';
+    schema.source = filePath;
+    return schema;
   }
 }

@@ -27,6 +27,8 @@ model Group {
 model Schema {
   id        Int             @id @default(autoincrement())
   name      String          @unique
+  sourceType  String
+  source      String
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
   url       String
