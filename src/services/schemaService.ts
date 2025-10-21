@@ -5,13 +5,38 @@ import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
 import { GroupRepository } from '../repositories/groupRepo.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { ApiSchema } from '../core/apiSchema.ts';
+import { Group } from "../core/group.ts";
+
+export type SchemaListItem = {
+  id: number;
+  name: string;
+  group?: Group;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export class SchemaService {
+  [x: string]: any;
+  removeSchema(_args: { id: string | undefined; name: string | undefined; }) {
+    throw new Error("Method not implemented.");
+  }
   constructor(
     private readonly schemaFileRepo: SchemaFileRepository,
     private readonly groupRepo: GroupRepository,
     private readonly schemaRepo: SchemaRepository,
   ) {}
+
+  async getSchemas(options: { groupName?: string; page?: number; size?: number }): Promise<SchemaListItem[]> {
+    const schemasFromDb = await this.schemaRepo.findMany(options);
+
+    return schemasFromDb.map(s => ({
+      id: s.id,
+      name: s.name,
+      group: s.Group ? new Group(s.Group.id, s.Group.name, s.Group.createdAt, s.Group.updatedAt, s.Group.color, []) : undefined,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }));
+  }
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
     if (args.url) {

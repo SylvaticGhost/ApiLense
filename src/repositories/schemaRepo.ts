@@ -1,8 +1,24 @@
 import { ApiSchema } from '../core/apiSchema.ts';
-import { PrismaClient } from '../../prisma/generated/client.ts';
+import { Group, PrismaClient, Schema } from '../../prisma/generated/client.ts';
 
 export class SchemaRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
+
+ async findMany(options: { groupName?: string; page?: number; size?: number }): Promise<(Schema & { Group: Group | null })[]> {
+    const { groupName, page = 1, size = 10 } = options;
+    const skip = (page - 1) * size;
+
+    return await this.prismaClient.schema.findMany({
+      where: {
+        Group: groupName ? { name: groupName } : undefined,
+      },
+      include: {
+        Group: true,
+      },
+      skip: skip,
+      take: size,
+    });
+  }
 
   async save(schema: ApiSchema) {
     await this.prismaClient.schema.create({
