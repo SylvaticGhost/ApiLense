@@ -5,38 +5,17 @@ import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
 import { GroupRepository } from '../repositories/groupRepo.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { ApiSchema } from '../core/apiSchema.ts';
-import { Group } from "../core/group.ts";
-
-export type SchemaListItem = {
-  id: number;
-  name: string;
-  group?: Group;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import { parseApiSchemaFromText } from '../mapper/schemaParser.ts';
+import { Endpoint } from '../core/endpoint.ts';
+import { EndpointRepository } from '../repositories/endpointRepository.ts';
 
 export class SchemaService {
-  [x: string]: any;
-  removeSchema(_args: { id: string | undefined; name: string | undefined; }) {
-    throw new Error("Method not implemented.");
-  }
   constructor(
     private readonly schemaFileRepo: SchemaFileRepository,
     private readonly groupRepo: GroupRepository,
     private readonly schemaRepo: SchemaRepository,
+    private readonly endpointRepo: EndpointRepository,
   ) {}
-
-  async getSchemas(options: { groupName?: string; page?: number; size?: number }): Promise<SchemaListItem[]> {
-    const schemasFromDb = await this.schemaRepo.findMany(options);
-
-    return schemasFromDb.map(s => ({
-      id: s.id,
-      name: s.name,
-      group: s.Group ? new Group(s.Group.id, s.Group.name, s.Group.createdAt, s.Group.updatedAt, s.Group.color, []) : undefined,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-    }));
-  }
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
     if (args.url) {
@@ -60,19 +39,36 @@ export class SchemaService {
     }
   }
 
+  /**
+   * Loads an API schema from a specified source, validates it, retrieves its content,
+   * parses endpoints, checks group existence, ensures schema name uniqueness, writes the schema file,
+   * constructs the schema object, and saves it to the repository.
+   *
+   * @param input - The source identifier (e.g., file path, URL, etc.) for the schema.
+   * @param args - Arguments for loading the schema, including group and optional name.
+   * @param validationFunc - Function to validate the input source.
+   * @param retrievalFunc - Asynchronous function to retrieve the schema content from the source.
+   * @param fabricFunc - Factory function to create an `ApiSchema` instance.
+   * @returns A `Promise` resolving to a `Result` containing the new schema ID on success, or an error result on failure.
+   */
   private async loadSchemaFromSource(
     input: string,
     args: LoadSchemaArgs,
     validationFunc: (input: string) => Result,
     retrievalFunc: (input: string) => Promise<string>,
-    fabricFunc: (id: number, name: string, groupId: number | undefined, source: string) => ApiSchema,
+    fabricFunc: (
+      id: number,
+      name: string,
+      groupId: number | undefined,
+      source: string,
+    ) => ApiSchema,
   ): Promise<Result> {
     const validationResult = validationFunc(input);
     if (validationResult.isFailure()) {
       return validationResult;
     }
 
-    const content = await retrievalFunc(input);
+    const content: string = await retrievalFunc(input);
 
     const groupCheckResult = await this.CheckGroupExists(args.group);
     if (groupCheckResult.isFailure()) {
@@ -88,10 +84,11 @@ export class SchemaService {
     const newSchemaId = (await this.schemaRepo.lastId()) + 1;
     const schemaName = args.name ?? `Schema_${newSchemaId}`;
 
-    await this.schemaFileRepo.writeSchemaFile(schemaName, content);
-
+    const endpoints: Endpoint[] = await parseApiSchemaFromText(content);
     const schema = fabricFunc(newSchemaId, schemaName, groupId, input);
+
     await this.schemaRepo.save(schema);
+    await this.endpointRepo.saveSchemaEndpoints(newSchemaId, endpoints);
 
     return Result.success(newSchemaId);
   }
