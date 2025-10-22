@@ -3,7 +3,11 @@ export class Result {
   public errorMessage?: string;
   public value?: any;
 
-  private constructor(statusCode: number, errorMessage?: string, value: any = null) {
+  private constructor(
+    statusCode: number,
+    errorMessage?: string,
+    value: any = null,
+  ) {
     this.statusCode = statusCode;
     this.errorMessage = errorMessage;
     this.value = value;
@@ -22,18 +26,21 @@ export class Result {
   }
 
   castValue<T>(): T | null {
-    return this.hasValue() ? this.value as T : null;
+    return this.hasValue() ? (this.value as T) : null;
   }
 
-  valueOf() : boolean {
+  valueOf(): boolean {
     return this.isSuccess();
   }
 
   public static success(value: any = null, statusCode: number = 200): Result {
-    return new Result(statusCode, "", value);
+    return new Result(statusCode, '', value);
   }
 
-  public static failure(errorMessage?: string, statusCode: number = 500): Result {
+  public static failure(
+    errorMessage?: string,
+    statusCode: number = 500,
+  ): Result {
     return new Result(statusCode, errorMessage);
   }
 

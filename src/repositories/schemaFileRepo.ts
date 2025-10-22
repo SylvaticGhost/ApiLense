@@ -1,4 +1,4 @@
-import {  } from '@std/fs';
+import {} from '@std/fs';
 import { ensureDir } from '@std/fs';
 
 export class SchemaFileRepository {

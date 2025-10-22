@@ -4,6 +4,7 @@ import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
 import { DependencyContainer } from './dependencyContainer.ts';
 import { SchemaService } from '../services/schemaService.ts';
 import { PrismaClient } from '../../prisma/generated/client.ts';
+import { EndpointRepository } from '../repositories/endpointRepository.ts';
 
 export class DependencyRegistration {
   constructor(private readonly container: DependencyContainer) {}
@@ -25,25 +26,32 @@ export class DependencyRegistration {
       'SchemaRepository',
     );
 
-    this.container.register(
-      () => {
-        const location = Deno.env.get('SCHEMA_LOCATION')
-        if (!location) {
-          throw new Error('SCHEMA_LOCATION is not set');
-        }
-        return new SchemaFileRepository(location);
-      },
-      'SchemaFileRepository',
-    );
+    this.container.register(() => {
+      const location = Deno.env.get('SCHEMA_LOCATION');
+      if (!location) {
+        throw new Error('SCHEMA_LOCATION is not set');
+      }
+      return new SchemaFileRepository(location);
+    }, 'SchemaFileRepository');
 
-    this.container.register((c : DependencyContainer): SchemaService => {
+    this.container.register(() => {
+      return new EndpointRepository();
+    }, 'EndpointRepository');
+
+    this.container.register((c: DependencyContainer): SchemaService => {
       const groupRepo = c.resolve<GroupRepository>('GroupRepository');
       const schemaRepo = c.resolve<SchemaRepository>('SchemaRepository');
       const schemaFileRepo = c.resolve<SchemaFileRepository>(
         'SchemaFileRepository',
       );
+      const endpointRepo = c.resolve<EndpointRepository>('EndpointRepository');
 
-      return new SchemaService(schemaFileRepo, groupRepo, schemaRepo);
+      return new SchemaService(
+        schemaFileRepo,
+        groupRepo,
+        schemaRepo,
+        endpointRepo,
+      );
     }, 'SchemaService');
   }
 }
