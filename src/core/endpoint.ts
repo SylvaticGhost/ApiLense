@@ -6,17 +6,20 @@ export class Endpoint {
   method: HttpMethod;
   path: string;
   template: Template;
+  responses: number[] = [];
 
   constructor(
     name: string,
     method: HttpMethod,
     path: string,
     template: Template,
+    responses: number[] = [],
   ) {
     this.name = name;
     this.method = method;
     this.path = path;
     this.template = template;
+    this.responses = responses;
   }
 
   static createFromJson(data: any): Endpoint {
@@ -27,15 +30,22 @@ export class Endpoint {
 
     const path = data.url ?? data.path;
     if (!path || typeof path !== 'string') {
-      throw new Error(`Endpoint path/url is required`);
+      throw new Error('Endpoint path/url is required');
     }
 
     const template = Template.createFromJson(data);
+    const responses = Array.isArray(data.responses)
+      ? data.responses
+          .map((x: any) => Number(x))
+          .filter((n: unknown) => Number.isFinite(n))
+      : [];
+
     return new Endpoint(
       data.name ?? path,
       rawMethod as HttpMethod,
       path,
       template,
+      responses,
     );
   }
 }
