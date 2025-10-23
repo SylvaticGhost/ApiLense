@@ -26,22 +26,18 @@ Deno.test(
     );
     const offerCreate = endpoints.find((e) => e.path === '/api/offer/create');
 
-    // --- /api/work ---
     assertEquals(work?.method, HTTP_METHODS.GET);
     assertEquals(work?.name, 'work');
     assertEquals(work?.template.params.length, 0);
 
-    // --- /api/application/{offerId}/apply ---
     assertEquals(apply?.method, HTTP_METHODS.POST);
     assertEquals(apply?.template.params.length, 1);
     assertEquals(apply?.template.params[0].name, 'offerId');
     assertEquals(apply?.template.params[0].type, 'string');
     assertEquals(apply?.template.params[0].required, true);
 
-    // --- /api/user/avatar/upload ---
     assertEquals(uploadAvatar?.method, HTTP_METHODS.POST);
 
-    // --- /api/offer/create ---
     assertEquals(offerCreate?.method, HTTP_METHODS.POST);
 
     console.log(
