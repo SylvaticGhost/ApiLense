@@ -5,6 +5,7 @@ import { DependencyRegistration } from './infrastructure/dependencyRegistration.
 import { MainDispatcher } from './infrastructure/mainDispatcher.ts';
 import { SchemaCommandDispatcher } from './commands/schemaCommandDispatcher.ts';
 import { GroupCommandDispatcher } from './commands/groupCommandDispatcher.ts';
+import { EndpointFillingDispatcher } from './commands/endpointFillingDispatcher.ts';
 
 const container = new DependencyContainer();
 const registrator = new DependencyRegistration(container);
@@ -26,6 +27,10 @@ await new MainDispatcher(new Command(), container)
   .add(
     (command, depContainer) =>
       new GroupCommandDispatcher(command, depContainer),
+  )
+  .add(
+    (command, depContainer) =>
+      new EndpointFillingDispatcher(command, depContainer),
   )
   .registerCommands()
   .run(Deno.args);
