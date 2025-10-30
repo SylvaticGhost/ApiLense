@@ -4,7 +4,8 @@ import { FileSystemBasedRepository } from './Bases/fileSystemBasedRepository.ts'
 export class EndpointRepository extends FileSystemBasedRepository {
   getEndpoint(schemaId: number, enpointPath: string): Promise<Endpoint | null> {
     enpointPath = enpointPath.replace(/\//g, '_');
-    const filePath = `volume/schemas/${schemaId}/endpoints/${enpointPath}.json`;
+    let filePath = `volume/schemas/${schemaId}/endpoints/${enpointPath}`;
+    if (!filePath.endsWith('.json')) filePath += '.json';
     return super.readObjectFromFile<Endpoint>(filePath);
   }
 
@@ -19,8 +20,8 @@ export class EndpointRepository extends FileSystemBasedRepository {
     }
   }
 
-  private getFilePath(schemaId: number, endpoint: Endpoint): string {
-    return `volume/schemas/${schemaId}/endpoints/${endpoint.path.replace(/\//g, '_')}_${endpoint.method}.json`;
+  private getFilePath(schemaId: number, endpoint: Endpoint) {
+    return `volume/schemas/${schemaId}/endpoints/${endpoint.fileName()}`;
   }
 
   private ensureSchemaDirectory(schemaId: number): Promise<void> {

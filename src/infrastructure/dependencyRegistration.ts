@@ -7,6 +7,7 @@ import { PrismaClient } from '../../prisma/generated/client.ts';
 import { EndpointRepository } from '../repositories/endpointRepository.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { TemplateFillingService } from '../services/templateFillingService.ts';
+import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
 
 export class DependencyRegistration {
   constructor(private readonly container: DependencyContainer) {}
@@ -26,6 +27,11 @@ export class DependencyRegistration {
     this.container.registerDbRepo(
       (c) => new SchemaRepository(c),
       'SchemaRepository',
+    );
+
+    this.container.registerDbRepo(
+      (c) => new EndpointMetaDataRepository(c),
+      'EndpointMetaDataRepository',
     );
 
     this.container.register(() => {
@@ -51,12 +57,16 @@ export class DependencyRegistration {
         'SchemaFileRepository',
       );
       const endpointRepo = c.resolve<EndpointRepository>('EndpointRepository');
+      const endpointMetaDataRepository = c.resolve<EndpointMetaDataRepository>(
+        'EndpointMetaDataRepository',
+      );
 
       return new SchemaService(
         schemaFileRepo,
         groupRepo,
         schemaRepo,
         endpointRepo,
+        endpointMetaDataRepository,
       );
     }, 'SchemaService');
 
@@ -68,10 +78,14 @@ export class DependencyRegistration {
         const templateFillingRepo = c.resolve<TemplateFillingRepository>(
           'TemplateFillingRepository',
         );
+        const endpointMetaDataRepository =
+          c.resolve<EndpointMetaDataRepository>('EndpointMetaDataRepository');
+
         return new TemplateFillingService(
           endpointRepo,
           schemaRepo,
           templateFillingRepo,
+          endpointMetaDataRepository,
         );
       },
       'TemplateFillingService',

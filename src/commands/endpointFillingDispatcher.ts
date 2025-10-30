@@ -82,7 +82,6 @@ export class EndpointFillingDispatcher implements IDispatcher {
                   },
                 )
                 .map((args) => {
-                  console.info(args);
                   return {
                     schemaId: Number(args.schema!),
                     endpointName: args.endpoint!,

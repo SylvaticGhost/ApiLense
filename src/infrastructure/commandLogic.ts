@@ -1,3 +1,4 @@
+import { exit } from 'node:process';
 import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
 import { ArgValidator } from '../validators/argValidator.ts';

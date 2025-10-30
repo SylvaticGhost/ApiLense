@@ -1,6 +1,25 @@
 import { Template } from './template.ts';
 import { HTTP_METHODS, type HttpMethod } from './enums.ts';
 
+export class EndpointMetaData {
+  schemaId: number;
+  name: string;
+  method: HttpMethod;
+  path: string;
+
+  constructor(
+    schemaId: number,
+    name: string,
+    method: HttpMethod,
+    path: string,
+  ) {
+    this.schemaId = schemaId;
+    this.name = name;
+    this.method = method;
+    this.path = path;
+  }
+}
+
 export class Endpoint {
   name: string;
   method: HttpMethod;
@@ -20,6 +39,18 @@ export class Endpoint {
     this.path = path;
     this.template = template;
     this.responses = responses;
+  }
+
+  toMetaData(schemaId: number): EndpointMetaData {
+    return new EndpointMetaData(schemaId, this.name, this.method, this.path);
+  }
+
+  static fileName(path: string, method: HttpMethod): string {
+    return `${path.replace(/\//g, '_')}_${method}.json`;
+  }
+
+  fileName(): string {
+    return Endpoint.fileName(this.path, this.method);
   }
 
   static createFromJson(data: any): Endpoint {

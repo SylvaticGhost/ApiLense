@@ -141,7 +141,7 @@ export class TemplateFilling {
 
   /** @returns file path where this filling is should be stored */
   filePath(): string {
-    return `volume/fillings/${this.schemaId}/${this.endpointName}_${this.method}/${this.name}.json`;
+    return `volume/fillings/${this.schemaId}/${this.endpointName.replace(/\//g, '_')}_${this.method}/${this.name}.json`;
   }
 
   stringify(): string {

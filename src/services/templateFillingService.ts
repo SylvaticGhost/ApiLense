@@ -3,6 +3,7 @@ import { ApiSchema } from '../core/apiSchema.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
 import { EndpointRepository } from '../repositories/endpointRepository.ts';
+import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { Guard } from '../utils/guard.ts';
@@ -13,6 +14,7 @@ export class TemplateFillingService {
     private readonly endpointRepo: EndpointRepository,
     private readonly schemaRepo: SchemaRepository,
     private readonly templateFillingRepository: TemplateFillingRepository,
+    private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
   ) {}
 
   /**
@@ -35,19 +37,34 @@ export class TemplateFillingService {
       return resultBuilder.notFound(`Schema with ID ${schemaId} not found`);
     }
 
-    Guard.against.nullOrEmpty(endpointName, 'endpointName');
+    const metaData = await this.endpointMetaDataRepository.getByStringParameter(
+      schema.id,
+      endpointName,
+    );
+
+    if (!metaData) {
+      return resultBuilder.notFound(
+        `Endpoint metadata "${endpointName}" not found in schema ID ${schemaId}`,
+      );
+    }
+
+    const endpointSearchClause = Endpoint.fileName(
+      metaData.path,
+      metaData.method,
+    );
+
     const endpoint: Endpoint | null = await this.endpointRepo.getEndpoint(
       schemaId,
-      endpointName,
+      endpointSearchClause,
     );
     if (!endpoint) {
       return resultBuilder.notFound(
-        `Endpoint "${endpointName}" not found in schema ID ${schemaId}`,
+        `Endpoint "${endpointSearchClause}" not found in schema ID ${schemaId}`,
       );
     }
 
     const templateFilling: TemplateFilling = TemplateFilling.create(
-      templateName || `${endpoint.name}_filling`,
+      templateName || `${endpoint.name.replace(/\//g, '_')}_filling`,
       schema.id,
       endpoint,
       endpoint.template,
@@ -55,10 +72,13 @@ export class TemplateFillingService {
 
     let i: number = 2;
     while (
-      !(await this.templateFillingRepository.checkIfNameUsed(templateFilling))
+      await this.templateFillingRepository.checkIfNameUsed(templateFilling)
     ) {
       templateFilling.updateName(`${templateName}_${i}`);
       i++;
+
+      if (i > 50_000)
+        throw new Error('Too many template fillings with the same name exist');
     }
 
     await this.templateFillingRepository.save(templateFilling);

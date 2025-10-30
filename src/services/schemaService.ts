@@ -8,6 +8,7 @@ import { ApiSchema } from '../core/apiSchema.ts';
 import { parseApiSchemaFromText } from '../mapper/schemaParser.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { EndpointRepository } from '../repositories/endpointRepository.ts';
+import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
 
 export class SchemaService {
   constructor(
@@ -15,6 +16,7 @@ export class SchemaService {
     private readonly groupRepo: GroupRepository,
     private readonly schemaRepo: SchemaRepository,
     private readonly endpointRepo: EndpointRepository,
+    private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
   ) {}
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
@@ -89,6 +91,9 @@ export class SchemaService {
 
     await this.schemaRepo.save(schema);
     await this.endpointRepo.saveSchemaEndpoints(newSchemaId, endpoints);
+
+    const metaDatas = endpoints.map((e) => e.toMetaData(newSchemaId));
+    await this.endpointMetaDataRepository.saveAll(metaDatas);
 
     return Result.success(newSchemaId);
   }
