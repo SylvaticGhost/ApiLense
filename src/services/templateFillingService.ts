@@ -1,4 +1,4 @@
-import { EndpointFillingNewArgs } from '../contracts/endpointFillingCommandsArgs.ts';
+import { TemplateFillingNewArgs } from '../contracts/templateFillingCommandsArgs.ts';
 import { ApiSchema } from '../core/apiSchema.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
@@ -28,7 +28,7 @@ export class TemplateFillingService {
     schemaId,
     endpointName,
     templateName,
-  }: EndpointFillingNewArgs): Promise<Result> {
+  }: TemplateFillingNewArgs): Promise<Result> {
     const resultBuilder = Result.newBuilder();
 
     Guard.against.negative(schemaId, 'schemaId');

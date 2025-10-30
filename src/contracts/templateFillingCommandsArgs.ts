@@ -1,4 +1,4 @@
-export interface EndpointFillingNewArgs {
+export interface TemplateFillingNewArgs {
   schemaId: number;
   endpointName: string;
   templateName?: string;

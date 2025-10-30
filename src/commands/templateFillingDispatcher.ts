@@ -2,20 +2,18 @@ import { Command } from '@cliffy/command';
 import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { IDispatcher } from '../infrastructure/mainDispatcher.ts';
 import { TemplateFillingService } from '../services/templateFillingService.ts';
-import { ArgValidator } from '../validators/argValidator.ts';
-import { EndpointFillingNewArgs } from '../contracts/endpointFillingCommandsArgs.ts';
-import { Result } from '../utils/result.ts';
+import { TemplateFillingNewArgs } from '../contracts/templateFillingCommandsArgs.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
 import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { Guard } from '../utils/guard.ts';
 
-interface EndpointFillingNewPureArgs {
+interface TemplateFillingNewPureArgs {
   schema?: string | undefined;
   endpoint?: string | undefined;
   name?: string | undefined;
 }
 
-export class EndpointFillingDispatcher implements IDispatcher {
+export class TemplateFillingDispatcher implements IDispatcher {
   private readonly templateFillingService: TemplateFillingService;
 
   constructor(
@@ -36,8 +34,8 @@ export class EndpointFillingDispatcher implements IDispatcher {
       .action(
         async (options) =>
           await CommandLogic.define<
-            EndpointFillingNewPureArgs,
-            EndpointFillingNewArgs,
+            TemplateFillingNewPureArgs,
+            TemplateFillingNewArgs,
             TemplateFilling
           >()
             .withValidation((argValidator) =>
@@ -86,7 +84,7 @@ export class EndpointFillingDispatcher implements IDispatcher {
                     schemaId: Number(args.schema!),
                     endpointName: args.endpoint!,
                     templateName: args.name,
-                  } as EndpointFillingNewArgs;
+                  } as TemplateFillingNewArgs;
                 }),
             )
             .withLogic(async (input) => {
