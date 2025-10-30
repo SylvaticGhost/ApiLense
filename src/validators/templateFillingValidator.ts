@@ -12,14 +12,21 @@ export class TemplateFillingValidator {
       template,
     )
       .forkWith(this.validateParams(templateFilling.params, template.params))
-      .forkWith(this.ValidateBodyFilling(templateFilling.body, template.body))
+      .forkWith(
+        this.ValidateBodyFilling(
+          templateFilling.bodyFilling,
+          template.bodyFields,
+        ),
+      )
       .getResultOrDefault(Result.success())!;
   }
 
   private static ValidateBodyFilling(
-    bodyFilling: object,
+    bodyFilling: object | null,
     bodyTemplate: BodyField[],
   ): Result | undefined {
+    if (!bodyFilling) return undefined;
+
     for (const [key, value] of Object.entries(bodyFilling)) {
       const templateField = bodyTemplate.find((f) => f.name === key);
       if (!templateField)
@@ -94,7 +101,7 @@ export class TemplateFillingValidator {
       .forkCompare(
         (f, e) => !ValueValidator.validate(f.value, e.type as any, !e.required),
         Result.badRequest(
-          `Param value for '${paramTemplate.name}' is not valid for type '${e.type}'`,
+          `Param value for '${paramTemplate.name}' is not valid for type '${paramTemplate.type}'`,
         ),
       )
       .getResultOrDefault();

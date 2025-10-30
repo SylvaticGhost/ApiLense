@@ -18,5 +18,7 @@ export class TemplateFillingArgsValidator {
     const endpointName = args.endpointName;
     if (typeof endpointName !== 'string' || endpointName.trim() === '')
       return Result.badRequest('Endpoint name must be a non-empty string');
+
+    return Result.success();
   }
 }
