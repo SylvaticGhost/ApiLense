@@ -31,5 +31,6 @@ export class MainDispatcher implements IDispatcher {
 
   async run(args: string[] | undefined): Promise<void> {
     await this.command.parse(args);
+    Deno.exit();
   }
 }

@@ -33,4 +33,23 @@ export class SchemaRepository {
     });
     return last?.id ?? 0;
   }
+
+  async getById(id: number): Promise<ApiSchema | null> {
+    const record = await this.prismaClient.schema.findUnique({
+      where: { id: id },
+    });
+    if (!record) {
+      return null;
+    }
+
+    return new ApiSchema(
+      record.id,
+      record.name,
+      record.createdAt,
+      record.updatedAt,
+      record.groupId || undefined,
+      record.url || undefined,
+      record.filePath || undefined,
+    );
+  }
 }

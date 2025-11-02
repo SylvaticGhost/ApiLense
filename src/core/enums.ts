@@ -12,7 +12,6 @@ export const HTTP_METHODS = {
 
 export type HttpMethod = ObjectValues<typeof HTTP_METHODS>;
 
-
 export const BODY_FIELD_TYPES = {
   INT: 'int',
   FLOAT: 'float',
