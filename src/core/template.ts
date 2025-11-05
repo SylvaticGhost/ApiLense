@@ -1,10 +1,11 @@
 import { BodyField } from './bodyField.ts';
-
+import { ParamType } from './enums.ts';
 export interface EndpointParam {
   name: string;
   type: string;
   required?: boolean;
   description?: string;
+  paramType: ParamType;
 }
 
 export class Template {
@@ -23,6 +24,7 @@ export class Template {
           type: p.type ?? 'string',
           required: Boolean(p.required ?? false),
           description: p.description,
+          paramType: String(p.paramType ?? p.in ?? 'query') as ParamType,
         }))
       : [];
 

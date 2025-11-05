@@ -29,3 +29,12 @@ export const BODY_FIELD_TYPE_MAP: Record<string, BodyFieldType> = {
   string: BODY_FIELD_TYPES.STRING,
   object: BODY_FIELD_TYPES.OBJECT,
 };
+
+export const PARAM_TYPE = {
+  QUERY: 'query',
+  HEADER: 'header',
+  PATH: 'path',
+  COOKIE: 'cookie',
+};
+
+export type ParamType = ObjectValues<typeof PARAM_TYPE>;
