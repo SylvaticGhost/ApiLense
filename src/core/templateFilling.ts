@@ -115,6 +115,15 @@ export class TemplateFilling {
     this.name = newName;
   }
 
+  bodyAsString(): string {
+    return this.bodyFilling ? JSON.stringify(this.bodyFilling, null, 2) : '';
+  }
+
+  getParamValue(paramName: string): string | null {
+    const param = this.params.find((p) => p.name === paramName);
+    return param ? param.value : null;
+  }
+
   static create(
     name: string,
     schemaId: number,
@@ -141,7 +150,19 @@ export class TemplateFilling {
 
   /** @returns file path where this filling is should be stored */
   filePath(): string {
-    return `volume/fillings/${this.schemaId}/${this.endpointName.replace(/\//g, '_')}_${this.method}/${this.name}.json`;
+    return TemplateFilling.filePath(
+      this.schemaId,
+      this.endpointName,
+      this.name,
+    );
+  }
+
+  static filePath(
+    schemaId: number,
+    endpointName: string,
+    templateName: string,
+  ) {
+    return `volume/fillings/${schemaId}/${endpointName.replace(/\//g, '_')}/${templateName}.json`;
   }
 
   stringify(): string {

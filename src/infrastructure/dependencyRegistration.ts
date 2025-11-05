@@ -8,6 +8,9 @@ import { EndpointRepository } from '../repositories/endpointRepository.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { TemplateFillingService } from '../services/templateFillingService.ts';
 import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
+import { RequestRunner } from './requestRunner.ts';
+import { EndpointService } from '../services/endpointService.ts';
+import { TestService } from '../services/testService.ts';
 
 export class DependencyRegistration {
   constructor(private readonly container: DependencyContainer) {}
@@ -18,6 +21,8 @@ export class DependencyRegistration {
       await prismaClient.$connect();
       return prismaClient;
     }, 'PrismaClient');
+
+    this.container.register((_) => new RequestRunner(), 'RequestRunner');
 
     this.container.registerDbRepo(
       (c) => new GroupRepository(c),
@@ -90,5 +95,21 @@ export class DependencyRegistration {
       },
       'TemplateFillingService',
     );
+
+    this.container.register((c: DependencyContainer) => {
+      return new EndpointService(
+        c.resolve<EndpointRepository>('EndpointRepository'),
+        c.resolve<EndpointMetaDataRepository>('EndpointMetaDataRepository'),
+      );
+    }, 'EndpointService');
+
+    this.container.register((c: DependencyContainer) => {
+      return new TestService(
+        c.resolve<EndpointService>('EndpointService'),
+        c.resolve<TemplateFillingService>('TemplateFillingService'),
+        c.resolve<SchemaRepository>('SchemaRepository'),
+        c.resolve<RequestRunner>('RequestRunner'),
+      );
+    }, 'TestService');
   }
 }

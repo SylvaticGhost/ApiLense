@@ -92,7 +92,7 @@ export class TemplateFillingDispatcher implements IDispatcher {
               Guard.against.negative(input.schemaId, 'schemaId');
               Guard.against.nullOrUndefined(input.endpointName, 'endpointName');
 
-              return await this.templateFillingService.createEndpointTemplateTemplate(
+              return await this.templateFillingService.createEndpointTemplate(
                 input,
               );
             })

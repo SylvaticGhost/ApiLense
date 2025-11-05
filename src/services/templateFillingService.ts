@@ -8,6 +8,7 @@ import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
+import { TemplateFillingValidator } from '../validators/templateFillingValidator.ts';
 
 export class TemplateFillingService {
   constructor(
@@ -24,7 +25,7 @@ export class TemplateFillingService {
    * @param templateName - The desired name for the new template filling.
    * @returns A Result object containing the created {@link TemplateFilling} on success, or an error message on failure.
    */
-  async createEndpointTemplateTemplate({
+  async createEndpointTemplate({
     schemaId,
     endpointName,
     templateName,
@@ -90,5 +91,42 @@ export class TemplateFillingService {
     }
 
     return resultBuilder.success(templateFilling);
+  }
+
+  async getTemplate(
+    schemaId: number,
+    endpointName: string,
+    templateFillingName: string,
+  ): Promise<Result> {
+    const endpoint = await this.endpointRepo.getEndpoint(
+      schemaId,
+      endpointName,
+    );
+    if (!endpoint) {
+      return Result.notFound(
+        `Endpoint "${endpointName}" in schema ID ${schemaId} not found`,
+      );
+    }
+
+    const templateFilling = await this.templateFillingRepository.get(
+      schemaId,
+      endpointName,
+      templateFillingName,
+    );
+
+    if (!templateFilling) {
+      return Result.notFound(
+        `Template filling "${templateFillingName}" for endpoint "${endpointName}" in schema ID ${schemaId} not found`,
+      );
+    }
+
+    const validationResult = TemplateFillingValidator.isValid(
+      templateFilling,
+      endpoint.template,
+    );
+
+    if (validationResult.isFailure()) return validationResult;
+
+    return Result.success(templateFilling);
   }
 }

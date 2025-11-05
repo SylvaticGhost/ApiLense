@@ -59,4 +59,14 @@ export class ApiSchema {
       filePath,
     );
   }
+
+  baseUrl(): string | null {
+    if (!this.url) return null;
+    try {
+      const urlObj = new URL(this.url);
+      return `${urlObj.protocol}//${urlObj.host}`;
+    } catch {
+      return null;
+    }
+  }
 }
