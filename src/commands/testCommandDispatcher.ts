@@ -4,11 +4,15 @@ import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { ApiCallReport } from '../core/apiCallReport.ts';
 import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { TestService } from '../services/testService.ts';
+import { colors } from '@cliffy/ansi/colors';
+import { StatementPrinter } from '../utils/printers/statementPrinter.ts';
+import { StringBuilder } from '../utils/stringBuilder.ts';
 
 interface RunEndpointCommandArgsPure {
   schema?: number | undefined;
   endpoint?: string | undefined;
   template?: string | undefined;
+  printOutput?: boolean | undefined;
 }
 
 interface RunEndpointCommandArgs {
@@ -34,6 +38,7 @@ export class TestCommandDispatcher implements IDispatcher {
       .option('-s, --schema <schema:number>', 'The schema to use for the test')
       .option('-e, --endpoint <endpoint:string>', 'The endpoint to test')
       .option('-t, --template <template:string>', 'The template to apply')
+      .option('--print-output <printOutput:boolean>', 'Whether to print output')
       .action(
         async (options) =>
           await CommandLogic.define<
@@ -79,11 +84,20 @@ export class TestCommandDispatcher implements IDispatcher {
             })
             .withResultDisplay((result) => {
               const report = result.castValueStrict<ApiCallReport>();
-              console.log('API Call Report:');
-              console.log(`Status: ${report.statusCode}`);
-              console.log(`Response Time: ${report.timeTakenMs} ms`);
-              console.log('Response Body:');
-              console.log(report.responseBody);
+              const sb = new StringBuilder()
+                .appendLine()
+                .appendLine(colors.bold('📄 API Call Report:'))
+                .appendLine(
+                  `Status: ${StatementPrinter.statusCodeColor(report.statusCode)}`,
+                )
+                .appendLine(`Response Time: ${report.timeTakenMs} ms`)
+                .appendBuilderIf(options.printOutput, (sb) =>
+                  sb
+                    .appendLine('Response Body 📩:')
+                    .appendStringifiedObject(report.responseBody),
+                )
+                .appendLine();
+              console.info(sb.toString());
             })
             .execute(options),
       );

@@ -1,3 +1,4 @@
+import { strictGet } from '../utils/propUtils.ts';
 import { BodyField } from './bodyField.ts';
 import { Endpoint } from './endpoint.ts';
 import { HttpMethod } from './enums.ts';
@@ -150,7 +151,28 @@ export class TemplateFilling {
 
   static fromJson(data: string): TemplateFilling {
     const obj = JSON.parse(data);
-    return TemplateFilling.parse(obj);
+    const name = strictGet(obj, (o) => o.name);
+    const schemaId = strictGet(obj, (o) => o.schemaId);
+    const endpointName = strictGet(obj, (o) => o.endpointName);
+    const endpointPath = strictGet(obj, (o) => o.endpointPath);
+    const method = strictGet(obj, (o) => o.method);
+    const params = strictGet(obj, (o) => o.params);
+    const body = strictGet(obj, (o) => o.bodyFilling);
+    return new TemplateFilling(
+      name,
+      schemaId,
+      endpointName,
+      endpointPath,
+      method,
+      params.map(
+        (p: any) =>
+          new ParamFilling(
+            strictGet(p, (p) => p.name),
+            strictGet(p, (p) => p.value),
+          ),
+      ),
+      body && typeof body === 'object' ? body : null,
+    );
   }
 
   /** @returns file path where this filling is should be stored */

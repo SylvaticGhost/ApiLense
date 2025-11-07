@@ -4,25 +4,31 @@ import { Endpoint } from '../../../src/core/endpoint.ts';
 
 const json: string = `
 {
-  "name": "parse cord t4_8",
+  "name": "search all 3",
   "schemaId": 8,
-  "endpointName": "GET /api/map/parse-cords",
-  "endpointPath": "/api/map/parse-cords",
-  "method": "GET",
-  "params": [
-    {
-      "name": "url",
-      "value": "https://maps.app.goo.gl/8bvaSxEqDc8n1niD8"
-    }
-  ],
-  "bodyFilling": null
+  "endpointName": "PUT /api/offer/search",
+  "endpointPath": "/api/offer/search",
+  "method": "PUT",
+  "params": [],
+  "bodyFilling":
+  {
+    "page": 1,
+    "pageSize": 6,
+    "orderProp": 0,
+    "orderDirection": 1,
+    "showDeleted": true
+  }
 }`;
 
 Deno.test('parse template filling from json', () => {
   const filling = TemplateFilling.fromJson(json);
   assert(filling !== null);
   assert(filling !== undefined);
-  assert(filling.name === 'parse cord t4_8');
+  assert(filling.name === 'search all 3');
+  assert(filling.schemaId === 8);
+  assert(filling.endpointName === 'PUT /api/offer/search');
+  assert(filling.method === 'PUT');
+  assert(filling.bodyFilling !== null);
 });
 
 Deno.test(

@@ -22,7 +22,6 @@ export class TemplateFillingRepository extends FileSystemBasedRepository {
       endpointName,
       templateName,
     );
-    console.debug(`Retrieving template filling from ${filePath}`);
     return super.readObjectFromFileWithFactory<TemplateFilling>(
       filePath,
       TemplateFilling.fromJson,

@@ -62,7 +62,6 @@ export class TestService {
       );
 
     const request = ApiCallRequest.create(schema, endpoint, templateFilling);
-
     const report = await this.requestRunner.run(request);
 
     return Result.success(report);

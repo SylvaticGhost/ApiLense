@@ -10,12 +10,14 @@ export class RequestRunner {
         ? {
             method: String(request.method),
             headers: request.headers,
-            body: request.body,
+            body: JSON.stringify(request.body),
           }
         : {
             method: String(request.method),
             headers: request.headers,
           };
+    requestBody.headers['Content-Type'] = 'application/json';
+    requestBody.headers['Accept'] = 'application/json';
 
     const response = await fetch(request.url, requestBody);
 

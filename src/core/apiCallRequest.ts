@@ -8,14 +8,14 @@ export class ApiCallRequest {
   url: string;
   method: HttpMethod;
   headers: Record<string, string>;
-  body: string | null;
+  body: any | null;
 
   private constructor(
     id: string,
     url: string,
     method: HttpMethod,
     headers: Record<string, string>,
-    body: string | null,
+    body: any | null,
   ) {
     this.id = id;
     this.url = url;
@@ -60,7 +60,7 @@ export class ApiCallRequest {
       url,
       endpoint.method,
       headers,
-      filling ? filling.bodyAsString() : null,
+      filling?.bodyFilling,
     );
   }
 }
