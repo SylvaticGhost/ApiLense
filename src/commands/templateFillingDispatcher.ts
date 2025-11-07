@@ -6,6 +6,10 @@ import { TemplateFillingNewArgs } from '../contracts/templateFillingCommandsArgs
 import { TemplateFilling } from '../core/templateFilling.ts';
 import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { Guard } from '../utils/guard.ts';
+import { StringBuilder } from '../utils/stringBuilder.ts';
+import { FileUrl } from '../utils/fileUrl.ts';
+import { colors } from '@cliffy/ansi/colors';
+import { tty } from '@cliffy/ansi/tty';
 
 interface TemplateFillingNewPureArgs {
   schema?: string | undefined;
@@ -92,15 +96,24 @@ export class TemplateFillingDispatcher implements IDispatcher {
               Guard.against.negative(input.schemaId, 'schemaId');
               Guard.against.nullOrUndefined(input.endpointName, 'endpointName');
 
-              return await this.templateFillingService.createEndpointTemplateTemplate(
+              return await this.templateFillingService.createEndpointTemplate(
                 input,
               );
             })
             .withResultDisplay((result) => {
-              const filling = result.castValue<TemplateFilling>();
-              console.log(
-                `Successfully created endpoint filling Name: ${filling?.name}`,
-              );
+              const filling = result.castValueStrict<TemplateFilling>();
+              const filePath = filling.filePath();
+              const sb = new StringBuilder()
+                .appendLine(
+                  colors.green('✅ Successfully created endpoint filling '),
+                )
+                .appendLine(`Name: ${filling.name}`)
+                .appendLine(`Schema ID: ${filling.schemaId}`)
+                .appendLine(`Endpoint: ${filling.endpointName}`)
+                .appendLine(`Stored at: ${filePath}`)
+                .appendLine(new FileUrl(filePath, 'Click to open').toString());
+
+              console.log(sb.toString());
             })
             .execute(options),
       );

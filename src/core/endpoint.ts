@@ -1,5 +1,6 @@
 import { Template } from './template.ts';
 import { HTTP_METHODS, type HttpMethod } from './enums.ts';
+import { strictGet } from '../utils/propUtils.ts';
 
 export class EndpointMetaData {
   schemaId: number;
@@ -51,6 +52,18 @@ export class Endpoint {
 
   fileName(): string {
     return Endpoint.fileName(this.path, this.method);
+  }
+
+  static fromStoredJson(data: string) {
+    const obj = JSON.parse(data);
+    const name = strictGet(obj, (obj) => obj.name);
+    const method = strictGet(obj, (obj) => obj.method);
+    const path = strictGet(obj, (obj) => obj.path);
+    const template = Template.createFromStoredJson(
+      strictGet(obj, (o) => o.template),
+    );
+    const responses = strictGet(obj, (o) => o.responses);
+    return new Endpoint(name, method, path, template, responses);
   }
 
   static createFromJson(data: any): Endpoint {

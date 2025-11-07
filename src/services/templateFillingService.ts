@@ -2,19 +2,18 @@ import { TemplateFillingNewArgs } from '../contracts/templateFillingCommandsArgs
 import { ApiSchema } from '../core/apiSchema.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
-import { EndpointRepository } from '../repositories/endpointRepository.ts';
-import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
+import { TemplateFillingValidator } from '../validators/templateFillingValidator.ts';
+import { EndpointService } from './endpointService.ts';
 
 export class TemplateFillingService {
   constructor(
-    private readonly endpointRepo: EndpointRepository,
     private readonly schemaRepo: SchemaRepository,
     private readonly templateFillingRepository: TemplateFillingRepository,
-    private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
+    private readonly endpointService: EndpointService,
   ) {}
 
   /**
@@ -24,7 +23,7 @@ export class TemplateFillingService {
    * @param templateName - The desired name for the new template filling.
    * @returns A Result object containing the created {@link TemplateFilling} on success, or an error message on failure.
    */
-  async createEndpointTemplateTemplate({
+  async createEndpointTemplate({
     schemaId,
     endpointName,
     templateName,
@@ -37,31 +36,18 @@ export class TemplateFillingService {
       return resultBuilder.notFound(`Schema with ID ${schemaId} not found`);
     }
 
-    const metaData = await this.endpointMetaDataRepository.getByStringParameter(
-      schema.id,
+    const endpointResult = await this.endpointService.getEndpointByRef(
+      schemaId,
       endpointName,
     );
 
-    if (!metaData) {
+    if (!endpointResult.isSuccess()) {
       return resultBuilder.notFound(
-        `Endpoint metadata "${endpointName}" not found in schema ID ${schemaId}`,
+        `Endpoint "${endpointName}" not found in schema ID ${schemaId}`,
       );
     }
 
-    const endpointSearchClause = Endpoint.fileName(
-      metaData.path,
-      metaData.method,
-    );
-
-    const endpoint: Endpoint | null = await this.endpointRepo.getEndpoint(
-      schemaId,
-      endpointSearchClause,
-    );
-    if (!endpoint) {
-      return resultBuilder.notFound(
-        `Endpoint "${endpointSearchClause}" not found in schema ID ${schemaId}`,
-      );
-    }
+    const endpoint: Endpoint = endpointResult.castValueStrict<Endpoint>();
 
     const templateFilling: TemplateFilling = TemplateFilling.create(
       templateName || `${endpoint.name.replace(/\//g, '_')}_filling`,
@@ -90,5 +76,44 @@ export class TemplateFillingService {
     }
 
     return resultBuilder.success(templateFilling);
+  }
+
+  async getTemplate(
+    schemaId: number,
+    endpointName: string,
+    templateFillingName: string,
+  ): Promise<Result> {
+    const endpointResult = await this.endpointService.getEndpointByRef(
+      schemaId,
+      endpointName,
+    );
+    if (endpointResult.isFailure()) {
+      return Result.notFound(
+        `Endpoint "${endpointName}" in schema ID ${schemaId} not found`,
+      );
+    }
+
+    const endpoint: Endpoint = endpointResult.castValueStrict<Endpoint>();
+
+    const templateFilling = await this.templateFillingRepository.get(
+      schemaId,
+      endpointName,
+      templateFillingName,
+    );
+
+    if (!templateFilling) {
+      return Result.notFound(
+        `Template filling "${templateFillingName}" for endpoint "${endpointName}" in schema ID ${schemaId} not found`,
+      );
+    }
+
+    const validationResult = TemplateFillingValidator.isValid(
+      templateFilling,
+      endpoint.template,
+    );
+
+    if (validationResult.isFailure()) return validationResult;
+
+    return Result.success(templateFilling);
   }
 }

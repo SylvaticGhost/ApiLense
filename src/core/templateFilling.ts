@@ -1,3 +1,4 @@
+import { strictGet } from '../utils/propUtils.ts';
 import { BodyField } from './bodyField.ts';
 import { Endpoint } from './endpoint.ts';
 import { HttpMethod } from './enums.ts';
@@ -115,6 +116,15 @@ export class TemplateFilling {
     this.name = newName;
   }
 
+  bodyAsString(): string {
+    return this.bodyFilling ? JSON.stringify(this.bodyFilling, null, 2) : '';
+  }
+
+  getParamValue(paramName: string): string | null {
+    const param = this.params.find((p) => p.name === paramName);
+    return param ? param.value : null;
+  }
+
   static create(
     name: string,
     schemaId: number,
@@ -139,9 +149,47 @@ export class TemplateFilling {
     );
   }
 
+  static fromJson(data: string): TemplateFilling {
+    const obj = JSON.parse(data);
+    const name = strictGet(obj, (o) => o.name);
+    const schemaId = strictGet(obj, (o) => o.schemaId);
+    const endpointName = strictGet(obj, (o) => o.endpointName);
+    const endpointPath = strictGet(obj, (o) => o.endpointPath);
+    const method = strictGet(obj, (o) => o.method);
+    const params = strictGet(obj, (o) => o.params);
+    const body = strictGet(obj, (o) => o.bodyFilling);
+    return new TemplateFilling(
+      name,
+      schemaId,
+      endpointName,
+      endpointPath,
+      method,
+      params.map(
+        (p: any) =>
+          new ParamFilling(
+            strictGet(p, (p) => p.name),
+            strictGet(p, (p) => p.value),
+          ),
+      ),
+      body && typeof body === 'object' ? body : null,
+    );
+  }
+
   /** @returns file path where this filling is should be stored */
   filePath(): string {
-    return `volume/fillings/${this.schemaId}/${this.endpointName.replace(/\//g, '_')}_${this.method}/${this.name}.json`;
+    return TemplateFilling.filePath(
+      this.schemaId,
+      this.endpointName,
+      this.name,
+    );
+  }
+
+  static filePath(
+    schemaId: number,
+    endpointName: string,
+    templateName: string,
+  ) {
+    return `volume/fillings/${schemaId}/${endpointName.replace(/\//g, '_')}/${templateName}.json`;
   }
 
   stringify(): string {

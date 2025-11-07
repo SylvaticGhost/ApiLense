@@ -1,3 +1,4 @@
+import { HttpMethod } from '../core/enums.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
 import { FileSystemBasedRepository } from './Bases/fileSystemBasedRepository.ts';
 
@@ -9,5 +10,21 @@ export class TemplateFillingRepository extends FileSystemBasedRepository {
 
   checkIfNameUsed(templateFilling: TemplateFilling): Promise<boolean> {
     return super.fileExistst(templateFilling.filePath());
+  }
+
+  get(
+    schemaId: number,
+    endpointName: string,
+    templateName: string,
+  ): Promise<TemplateFilling | null> {
+    const filePath = TemplateFilling.filePath(
+      schemaId,
+      endpointName,
+      templateName,
+    );
+    return super.readObjectFromFileWithFactory<TemplateFilling>(
+      filePath,
+      TemplateFilling.fromJson,
+    );
   }
 }

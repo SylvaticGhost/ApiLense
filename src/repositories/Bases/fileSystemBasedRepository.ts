@@ -34,4 +34,17 @@ export abstract class FileSystemBasedRepository {
       throw error;
     }
   }
+
+  protected async readObjectFromFileWithFactory<T>(
+    filePath: string,
+    factory: (str: string) => T,
+  ): Promise<T> {
+    try {
+      const text = await Deno.readTextFile(filePath);
+      return factory(text);
+    } catch (error) {
+      console.error('Error reading file:', error);
+      throw error;
+    }
+  }
 }

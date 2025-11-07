@@ -63,19 +63,13 @@ Deno.test(
   },
 );
 
-Deno.test(
-  'validate: STRING type currently returns false for ordinary strings (demonstrates mismatch)',
-  () => {
-    assertEquals(
-      ValueValidator.validate('hello', BODY_FIELD_TYPES.STRING),
-      false,
-    );
-    assertEquals(
-      ValueValidator.validate('any text', BODY_FIELD_TYPES.STRING),
-      false,
-    );
-  },
-);
+Deno.test('validate: STRING type returns true for any string input', () => {
+  assertEquals(ValueValidator.validate('hello', BODY_FIELD_TYPES.STRING), true);
+  assertEquals(
+    ValueValidator.validate('any text', BODY_FIELD_TYPES.STRING),
+    true,
+  );
+});
 
 Deno.test(
   'validate: OBJECT type returns false for JSON string (demonstrates mismatch)',

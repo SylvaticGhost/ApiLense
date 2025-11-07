@@ -9,6 +9,8 @@ export class ValueValidator {
     if (value === null || value === undefined) return allowNull;
 
     switch (type) {
+      case BODY_FIELD_TYPE_MAP.string:
+        return value !== null && value !== undefined;
       case BODY_FIELD_TYPE_MAP.int:
         return value !== null && value !== undefined;
       case BODY_FIELD_TYPE_MAP.integer:

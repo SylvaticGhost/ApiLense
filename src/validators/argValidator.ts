@@ -105,14 +105,14 @@ class FieldValidator<TField>
   ): FieldValidator<TField> {
     return this.should(
       (field) => typeof field === typeName,
-      `Field must be of type ${typeName}`,
+      `Field ${this.fieldName} must be of type ${typeName}`,
     );
   }
 
   notNull(): FieldValidator<TField> {
     return this.should(
       (field) => field !== null && field !== undefined,
-      `Field must not be null or undefined`,
+      `Field ${this.fieldName} must not be null or undefined`,
     );
   }
 
