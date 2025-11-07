@@ -75,6 +75,13 @@ export class DependencyRegistration {
       );
     }, 'SchemaService');
 
+    this.container.register((c: DependencyContainer) => {
+      return new EndpointService(
+        c.resolve<EndpointRepository>('EndpointRepository'),
+        c.resolve<EndpointMetaDataRepository>('EndpointMetaDataRepository'),
+      );
+    }, 'EndpointService');
+
     this.container.register(
       (c: DependencyContainer): TemplateFillingService => {
         const endpointRepo =
@@ -91,17 +98,11 @@ export class DependencyRegistration {
           schemaRepo,
           templateFillingRepo,
           endpointMetaDataRepository,
+          c.resolve<EndpointService>('EndpointService'),
         );
       },
       'TemplateFillingService',
     );
-
-    this.container.register((c: DependencyContainer) => {
-      return new EndpointService(
-        c.resolve<EndpointRepository>('EndpointRepository'),
-        c.resolve<EndpointMetaDataRepository>('EndpointMetaDataRepository'),
-      );
-    }, 'EndpointService');
 
     this.container.register((c: DependencyContainer) => {
       return new TestService(

@@ -148,6 +148,11 @@ export class TemplateFilling {
     );
   }
 
+  static fromJson(data: string): TemplateFilling {
+    const obj = JSON.parse(data);
+    return TemplateFilling.parse(obj);
+  }
+
   /** @returns file path where this filling is should be stored */
   filePath(): string {
     return TemplateFilling.filePath(

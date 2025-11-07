@@ -1,6 +1,6 @@
 import { ApiSchema } from './apiSchema.ts';
 import { Endpoint } from './endpoint.ts';
-import { HttpMethod, PARAM_TYPE } from './enums.ts';
+import { HTTP_METHODS, HttpMethod, PARAM_TYPE } from './enums.ts';
 import { TemplateFilling } from './templateFilling.ts';
 
 export class ApiCallRequest {
@@ -22,6 +22,12 @@ export class ApiCallRequest {
     this.method = method;
     this.headers = headers;
     this.body = body;
+  }
+
+  canHaveBody(): boolean {
+    return (
+      this.method !== HTTP_METHODS.GET && this.method !== HTTP_METHODS.HEAD
+    );
   }
 
   static create(

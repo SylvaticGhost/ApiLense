@@ -9,6 +9,7 @@ import { TemplateFillingRepository } from '../repositories/templateFillingReposi
 import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
 import { TemplateFillingValidator } from '../validators/templateFillingValidator.ts';
+import { EndpointService } from './endpointService.ts';
 
 export class TemplateFillingService {
   constructor(
@@ -16,6 +17,7 @@ export class TemplateFillingService {
     private readonly schemaRepo: SchemaRepository,
     private readonly templateFillingRepository: TemplateFillingRepository,
     private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
+    private readonly endpointService: EndpointService,
   ) {}
 
   /**
@@ -38,31 +40,18 @@ export class TemplateFillingService {
       return resultBuilder.notFound(`Schema with ID ${schemaId} not found`);
     }
 
-    const metaData = await this.endpointMetaDataRepository.getByStringParameter(
-      schema.id,
+    const endpointResult = await this.endpointService.getEndpointByRef(
+      schemaId,
       endpointName,
     );
 
-    if (!metaData) {
+    if (!endpointResult.isSuccess()) {
       return resultBuilder.notFound(
-        `Endpoint metadata "${endpointName}" not found in schema ID ${schemaId}`,
+        `Endpoint "${endpointName}" not found in schema ID ${schemaId}`,
       );
     }
 
-    const endpointSearchClause = Endpoint.fileName(
-      metaData.path,
-      metaData.method,
-    );
-
-    const endpoint: Endpoint | null = await this.endpointRepo.getEndpoint(
-      schemaId,
-      endpointSearchClause,
-    );
-    if (!endpoint) {
-      return resultBuilder.notFound(
-        `Endpoint "${endpointSearchClause}" not found in schema ID ${schemaId}`,
-      );
-    }
+    const endpoint: Endpoint = endpointResult.castValueStrict<Endpoint>();
 
     const templateFilling: TemplateFilling = TemplateFilling.create(
       templateName || `${endpoint.name.replace(/\//g, '_')}_filling`,
@@ -98,15 +87,17 @@ export class TemplateFillingService {
     endpointName: string,
     templateFillingName: string,
   ): Promise<Result> {
-    const endpoint = await this.endpointRepo.getEndpoint(
+    const endpointResult = await this.endpointService.getEndpointByRef(
       schemaId,
       endpointName,
     );
-    if (!endpoint) {
+    if (endpointResult.isFailure()) {
       return Result.notFound(
         `Endpoint "${endpointName}" in schema ID ${schemaId} not found`,
       );
     }
+
+    const endpoint: Endpoint = endpointResult.castValueStrict<Endpoint>();
 
     const templateFilling = await this.templateFillingRepository.get(
       schemaId,

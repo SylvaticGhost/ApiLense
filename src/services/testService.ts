@@ -3,6 +3,7 @@ import { Endpoint } from '../core/endpoint.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
 import { RequestRunner } from '../infrastructure/requestRunner.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
+import { FileUrl } from '../utils/fileUrl.ts';
 import { Result } from '../utils/result.ts';
 import { EndpointService } from './endpointService.ts';
 import { TemplateFillingService } from './templateFillingService.ts';
@@ -20,15 +21,16 @@ export class TestService {
     endpointRef: string,
     templateRef: string,
   ): Promise<Result> {
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) throw new Error(`Schema with id ${schemaId} not found`);
+
     const endpointGetResult = await this.endpointService.getEndpointByRef(
       schemaId,
       endpointRef,
     );
 
-    if (!endpointGetResult.isSuccess) return endpointGetResult;
+    if (!endpointGetResult.isSuccess()) return endpointGetResult;
 
-    const schema = await this.schemaRepo.getById(schemaId);
-    if (!schema) throw new Error(`Schema with id ${schemaId} not found`);
     const endpoint = endpointGetResult.castValueStrict<Endpoint>();
 
     let templateFilling = null;
@@ -39,10 +41,25 @@ export class TestService {
           endpoint.name,
           templateRef,
         );
-      if (!templateFillingGetResult.isSuccess) return templateFillingGetResult;
-      templateFilling =
-        templateFillingGetResult.castValueStrict<TemplateFilling>();
+
+      if (templateFillingGetResult.statusCode === 400) {
+        const errorMsg = `${templateFillingGetResult.errorMessage}\n.
+        Please review your template ${new FileUrl(
+          TemplateFilling.filePath(schemaId, endpoint.name, templateRef),
+          'CLICK',
+        ).toString()}`;
+        return Result.badRequest(errorMsg);
+      }
+      if (!templateFillingGetResult.isSuccess())
+        return templateFillingGetResult;
+
+      templateFilling = templateFillingGetResult.castValue<TemplateFilling>();
     }
+
+    if (!templateFilling)
+      console.log(
+        `❯ No template filling provided by reference "${templateRef}"`,
+      );
 
     const request = ApiCallRequest.create(schema, endpoint, templateFilling);
 

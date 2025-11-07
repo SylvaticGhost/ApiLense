@@ -21,6 +21,7 @@
     "strict": true
   },
   "imports": {
+    "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.0-rc.8",
     "@db/sqlite": "jsr:@db/sqlite",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.8",
     "@prisma/client": "npm:@prisma/client@^6.16.2",

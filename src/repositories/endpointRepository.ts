@@ -6,7 +6,10 @@ export class EndpointRepository extends FileSystemBasedRepository {
     enpointPath = enpointPath.replace(/\//g, '_');
     let filePath = `volume/schemas/${schemaId}/endpoints/${enpointPath}`;
     if (!filePath.endsWith('.json')) filePath += '.json';
-    return super.readObjectFromFile<Endpoint>(filePath);
+    return super.readObjectFromFileWithFactory<Endpoint>(
+      filePath,
+      Endpoint.fromStoredJson,
+    );
   }
 
   async saveSchemaEndpoints(
