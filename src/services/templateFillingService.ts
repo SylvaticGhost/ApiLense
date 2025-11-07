@@ -2,8 +2,6 @@ import { TemplateFillingNewArgs } from '../contracts/templateFillingCommandsArgs
 import { ApiSchema } from '../core/apiSchema.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
-import { EndpointRepository } from '../repositories/endpointRepository.ts';
-import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { Guard } from '../utils/guard.ts';
@@ -13,10 +11,8 @@ import { EndpointService } from './endpointService.ts';
 
 export class TemplateFillingService {
   constructor(
-    private readonly endpointRepo: EndpointRepository,
     private readonly schemaRepo: SchemaRepository,
     private readonly templateFillingRepository: TemplateFillingRepository,
-    private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
     private readonly endpointService: EndpointService,
   ) {}
 

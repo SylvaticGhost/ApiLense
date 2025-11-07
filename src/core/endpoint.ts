@@ -59,7 +59,9 @@ export class Endpoint {
     const name = strictGet(obj, (obj) => obj.name);
     const method = strictGet(obj, (obj) => obj.method);
     const path = strictGet(obj, (obj) => obj.path);
-    const template = Template.createFromJson(strictGet(obj, (o) => o.template));
+    const template = Template.createFromStoredJson(
+      strictGet(obj, (o) => o.template),
+    );
     const responses = strictGet(obj, (o) => o.responses);
     return new Endpoint(name, method, path, template, responses);
   }

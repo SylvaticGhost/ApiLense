@@ -84,20 +84,14 @@ export class DependencyRegistration {
 
     this.container.register(
       (c: DependencyContainer): TemplateFillingService => {
-        const endpointRepo =
-          c.resolve<EndpointRepository>('EndpointRepository');
         const schemaRepo = c.resolve<SchemaRepository>('SchemaRepository');
         const templateFillingRepo = c.resolve<TemplateFillingRepository>(
           'TemplateFillingRepository',
         );
-        const endpointMetaDataRepository =
-          c.resolve<EndpointMetaDataRepository>('EndpointMetaDataRepository');
 
         return new TemplateFillingService(
-          endpointRepo,
           schemaRepo,
           templateFillingRepo,
-          endpointMetaDataRepository,
           c.resolve<EndpointService>('EndpointService'),
         );
       },
