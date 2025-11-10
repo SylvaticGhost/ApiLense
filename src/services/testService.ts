@@ -1,6 +1,10 @@
+import { RunEndpointCommandArgs } from '../contracts/testCommandArgs.ts';
+import { ApiCallReport } from '../core/apiCallReport.ts';
 import { ApiCallRequest } from '../core/apiCallRequest.ts';
+import { ApiSchema } from '../core/apiSchema.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
+import { TestReport } from '../core/testReport.ts';
 import { RequestRunner } from '../infrastructure/requestRunner.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { FileUrl } from '../utils/fileUrl.ts';
@@ -16,12 +20,17 @@ export class TestService {
     private readonly requestRunner: RequestRunner,
   ) {}
 
-  async runEndpoint(
-    schemaId: number,
-    endpointRef: string,
-    templateRef: string,
-  ): Promise<Result> {
-    const schema = await this.schemaRepo.getById(schemaId);
+  async runEndpoint(parameters: RunEndpointCommandArgs): Promise<Result> {
+    const {
+      schema: schemaId,
+      endpoint: endpointRef,
+      template: templateRef,
+      numberOfRequests,
+      concurrency,
+      delayMs,
+    } = parameters;
+
+    const schema: ApiSchema | null = await this.schemaRepo.getById(schemaId);
     if (!schema) throw new Error(`Schema with id ${schemaId} not found`);
 
     const endpointGetResult = await this.endpointService.getEndpointByRef(
@@ -61,9 +70,50 @@ export class TestService {
         `❯ No template filling provided by reference "${templateRef}"`,
       );
 
-    const request = ApiCallRequest.create(schema, endpoint, templateFilling);
-    const report = await this.requestRunner.run(request);
+    if (numberOfRequests > 1 || concurrency > 1)
+      return await this.runMultipleRequests(
+        schema,
+        endpoint,
+        templateFilling,
+        numberOfRequests,
+        concurrency,
+        delayMs,
+      );
+    else return await this.runSingleRequest(schema, endpoint, templateFilling);
+  }
 
-    return Result.success(report);
+  private async runSingleRequest(
+    schema: ApiSchema,
+    endpoint: Endpoint,
+    filling: TemplateFilling | null,
+  ): Promise<Result> {
+    const request = ApiCallRequest.create(schema, endpoint, filling);
+    const report = await this.requestRunner.run(request);
+    const testReport = TestReport.single(report);
+    return Result.success(testReport);
+  }
+
+  private async runMultipleRequests(
+    schema: ApiSchema,
+    endpoint: Endpoint,
+    filling: TemplateFilling | null,
+    numberOfRequests: number,
+    concurrency: number,
+    delayMs: number,
+  ): Promise<Result> {
+    const requestsByThread: ApiCallRequest[][] = ApiCallRequest.createMany(
+      schema,
+      endpoint,
+      filling,
+      concurrency,
+      numberOfRequests,
+    );
+
+    const reports: ApiCallReport[][] = await this.requestRunner.runMultiple(
+      requestsByThread,
+      delayMs,
+    );
+    const testReport = TestReport.multiple(reports);
+    return Result.success(testReport);
   }
 }

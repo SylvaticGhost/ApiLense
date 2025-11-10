@@ -30,4 +30,24 @@ export class RequestRunner {
       requestId: request.id,
     };
   }
+
+  async runMultiple(
+    requestsByThread: ApiCallRequest[][],
+    delayMs: number,
+  ): Promise<ApiCallReport[][]> {
+    const threadPromises = requestsByThread.map(async (requests) => {
+      const threadReports: ApiCallReport[] = [];
+      for (const request of requests) {
+        const report = await this.run(request);
+        threadReports.push(report);
+        if (delayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+      return threadReports;
+    });
+
+    const results = await Promise.all(threadPromises);
+    return results;
+  }
 }

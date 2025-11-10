@@ -63,4 +63,25 @@ export class ApiCallRequest {
       filling?.bodyFilling,
     );
   }
+
+  static createMany(
+    schema: ApiSchema,
+    endpoint: Endpoint,
+    filling: TemplateFilling | null,
+    packs: number,
+    packSize: number,
+  ): ApiCallRequest[][] {
+    const requests: ApiCallRequest[][] = [];
+
+    for (let p = 0; p < packs; p++) {
+      const packRequests: ApiCallRequest[] = [];
+      for (let i = 0; i < packSize; i++) {
+        const request = ApiCallRequest.create(schema, endpoint, filling);
+        packRequests.push(request);
+      }
+      requests.push(packRequests);
+    }
+
+    return requests;
+  }
 }
