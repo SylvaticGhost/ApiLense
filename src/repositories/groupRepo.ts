@@ -1,44 +1,90 @@
+import {
+  PrismaClient,
+  Group as PrismaGroup,
+  Schema as PrismaSchema,
+} from '../../prisma/generated/client.ts';
+import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { Group } from '../core/group.ts';
-import { PrismaClient } from '../../prisma/generated/client.ts';
+import { ApiSchema } from '../core/apiSchema.ts';
 
 export class GroupRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
 
+  /**
+   * НОВИЙ МЕТОД
+   * Створює нову групу в базі даних.
+   */
+  async create(group: Group): Promise<Group> {
+    const createdRecord = await this.prismaClient.group.create({
+      data: {
+        name: group.name,
+        color: group.color ?? '',
+        createdAt: group.createdAt,
+        updatedAt: group.updatedAt,
+      },
+    });
+    return this.mapToDomain(createdRecord, []);
+  }
+
+  async lastId(): Promise<number> {
+    const last = await this.prismaClient.group.findFirst({
+      orderBy: { id: 'desc' },
+    });
+    return last?.id ?? 0;
+  }
+
   async exists(groupId: number): Promise<boolean> {
-    return (await this.getByIdQuery(groupId)) !== null;
-  }
-
-  async getByName(name: string): Promise<Group | null> {
-    const raw = await this.getByNameQuery(name);
-    return this.mapToDomain(raw);
-  }
-
-  private async getByIdQuery(groupId: number) {
-    return await this.prismaClient.group.findFirst({
+    const record = await this.prismaClient.group.findUnique({
       where: { id: groupId },
       select: { id: true },
     });
+    return record !== null;
   }
 
-  private async getByNameQuery(name: string) {
-    return await this.prismaClient.group.findFirst({
+  async getByName(name: string): Promise<Group | null> {
+    const raw = await this.prismaClient.group.findUnique({
       where: { name },
-      select: { id: true },
+      include: { Schemas: true },
     });
+    return this.mapToDomain(raw, raw?.Schemas);
   }
 
-  private mapToDomain(raw: any) {
+  async getById(id: number): Promise<Group | null> {
+    const raw = await this.prismaClient.group.findUnique({
+      where: { id: id },
+      include: { Schemas: true },
+    });
+    return this.mapToDomain(raw, raw?.Schemas);
+  }
+
+  private mapToDomain(
+    raw: PrismaGroup | null,
+    schemas: PrismaSchema[] | undefined,
+  ) {
     if (!raw) {
       return null;
     }
+
+    const apiSchemas = (schemas ?? []).map(
+      (s) =>
+        new ApiSchema(
+          s.id,
+          s.name,
+          s.createdAt,
+          s.updatedAt,
+          s.groupId ?? undefined,
+          s.url ?? undefined,
+          s.filePath ?? undefined,
+        ),
+    );
 
     return new Group(
       raw.id,
       raw.name,
       raw.createdAt,
       raw.updatedAt,
-      raw.color,
-      raw.Schemas,
+      raw.color ?? undefined,
+      apiSchemas,
     );
   }
 }

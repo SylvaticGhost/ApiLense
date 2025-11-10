@@ -11,6 +11,7 @@ import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepos
 import { RequestRunner } from './requestRunner.ts';
 import { EndpointService } from '../services/endpointService.ts';
 import { TestService } from '../services/testService.ts';
+import { GroupService } from '../services/groupService.ts';
 
 export class DependencyRegistration {
   constructor(private readonly container: DependencyContainer) {}
@@ -74,6 +75,11 @@ export class DependencyRegistration {
         endpointMetaDataRepository,
       );
     }, 'SchemaService');
+
+    this.container.register((c: DependencyContainer): GroupService => {
+      const groupRepo = c.resolve<GroupRepository>('GroupRepository');
+      return new GroupService(groupRepo);
+    }, 'GroupService');
 
     this.container.register((c: DependencyContainer) => {
       return new EndpointService(

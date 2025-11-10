@@ -24,7 +24,15 @@ function schemaToPlainBody(
   if (!schema || depth > 15) return undefined;
 
   if (schema.$ref) {
-    const ref = String(schema.$ref).replace('#/components/schemas/', '');
+    let ref = String(schema.$ref);
+    if (ref.startsWith('#/components/schemas/')) {
+      ref = ref.replace('#/components/schemas/', '');
+    } else if (ref.startsWith('#/definitions/')) {
+      ref = ref.replace('#/definitions/', '');
+    } else {
+      ref = ref.split('/').pop() || '';
+    }
+
     const resolved = schemasMap[ref];
     if (!resolved) return undefined;
     return schemaToPlainBody(resolved, schemasMap, depth + 1);
@@ -115,26 +123,43 @@ function extractBodyFields(
 
 export function openApiToSimpleSchema(openApi: any) {
   const endpoints: any[] = [];
-  const schemasMap = openApi.components?.schemas ?? {};
+
+  const schemasMap = {
+    ...(openApi.components?.schemas ?? {}),
+    ...(openApi.definitions ?? {}),
+  };
 
   for (const [path, methods] of Object.entries(openApi.paths)) {
     for (const [method, def] of Object.entries(
       methods as Record<string, any>,
     )) {
-      console.info(`Processing endpoint:`, def);
+      if (typeof def !== 'object' || def === null || Array.isArray(def)) {
+        continue;
+      }
+
+      console.info(`Processing endpoint: ${method.toUpperCase()} ${path}`);
+
+      const parametersList = [
+        ...(def.parameters ?? []),
+        ...(methods.parameters ?? []),
+      ];
+
       const params =
-        def.parameters?.map((p: any) => ({
-          name: p.name,
-          type: p.schema?.type ?? 'string',
-          required: !!p.required,
-          description: p.description,
-          paramType: p.in,
-        })) ?? [];
+        parametersList
+          ?.filter((p: any) => p.in !== 'body')
+          .map((p: any) => ({
+            name: p.name,
+            type: p.schema?.type ?? p.type ?? 'string',
+            required: !!p.required,
+            description: p.description,
+            paramType: p.in,
+          })) ?? [];
 
       let body: any = undefined;
+      let bodySchema: any = undefined;
 
       if (def.requestBody) {
-        let bodySchema = def.requestBody.schema ?? undefined;
+        bodySchema = def.requestBody.schema ?? undefined;
         if (!bodySchema) {
           const content = def.requestBody.content ?? {};
           const possibleKeys = [
@@ -154,9 +179,15 @@ export function openApiToSimpleSchema(openApi: any) {
             if (first?.schema) bodySchema = first.schema;
           }
         }
-        if (bodySchema) {
-          body = schemaToPlainBody(bodySchema, schemasMap, 0);
+      } else if (Array.isArray(parametersList)) {
+        const bodyParam = parametersList.find((p: any) => p.in === 'body');
+        if (bodyParam) {
+          bodySchema = bodyParam.schema;
         }
+      }
+
+      if (bodySchema) {
+        body = schemaToPlainBody(bodySchema, schemasMap, 0);
       }
 
       const responses: number[] = def.responses
@@ -196,7 +227,7 @@ export async function parseApiSchemaFromText(
     throw new Error(`Invalid JSON in schema: ${(e as Error).message}`);
   }
 
-  if (data.openapi && data.paths) {
+  if ((data.openapi || data.swagger) && data.paths) {
     data = openApiToSimpleSchema(data);
   }
 

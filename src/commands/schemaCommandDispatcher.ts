@@ -2,6 +2,11 @@
 import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { SchemaService } from '../services/schemaService.ts';
 import { SchemaCommandPrinters } from '../utils/printers/schemaCommandPrinters.ts';
+import {
+  ListSchemaArgs,
+  LoadSchemaArgs,
+} from '../contracts/schemaCommandsArgs.ts';
+import { colors } from '@cliffy/ansi/colors';
 
 export class SchemaCommandDispatcher {
   constructor(
@@ -11,7 +16,6 @@ export class SchemaCommandDispatcher {
 
   public registerCommands(): void {
     this.command
-      // schema-load
       .command('load')
       .description('Load an API schema')
       .option('-f, --file <file:string>', 'Path to the schema file')
@@ -21,7 +25,7 @@ export class SchemaCommandDispatcher {
       .action(async (options) => {
         const schemaService =
           this.container.resolve<SchemaService>('SchemaService');
-        const args = {
+        const args: LoadSchemaArgs = { // Використовуємо контракт
           file: options.file,
           url: options.url,
           name: options.name,
@@ -31,17 +35,61 @@ export class SchemaCommandDispatcher {
 
         SchemaCommandPrinters.loadSchema(result);
       })
-      // schema-list
+
       .command('schema-list', 'List all loaded schemas')
       .alias('sl')
-      .option('-g, --group <group:string>', 'Group of schemas to list')
-      .action((options) => {
-        console.log('Listing all loaded schemas...');
-        if (options.group) {
-          console.log('Group:', options.group);
+      .description(
+        'Lists schemas with filters, pagination, and interactive mode.',
+      )
+      .option('-g, --group <group:string>', 'Filter by group ID or name')
+      .option(
+        '-p, --page <page:number>',
+        'Page number for list mode',
+        { default: 1 },
+      )
+      .option(
+        '-s, --size <size:number>',
+        'Page size for list mode (if not set, pagination is off)',
+      )
+      .option('-d, --detailed', 'Show detailed info in list mode')
+      .option('--list-mode', 'Force simple list output')
+      .option(
+        '-i, --interactive-mode',
+        'Force interactive mode (overrides pagination)',
+      )
+      .action(async (options) => {
+        const schemaService =
+          this.container.resolve<SchemaService>('SchemaService');
+
+        const args: ListSchemaArgs = {
+          group: options.group,
+          page: options.page,
+          size: options.size ? Number(options.size) : undefined,
+        };
+
+        try {
+          const result = await schemaService.getSchemas(args);
+
+          const hasPaginationFlags = options.page !== 1 || !!options.size;
+          const isListMode = options.listMode || hasPaginationFlags;
+
+          if (options.interactiveMode) {
+            await SchemaCommandPrinters.displayInteractiveMode(result);
+          } else if (isListMode) {
+            SchemaCommandPrinters.displayListMode(result, {
+              detailed: !!options.detailed,
+            });
+          } else {
+            await SchemaCommandPrinters.displayInteractiveMode(result);
+          }
+        } catch (error) {
+          console.error(
+            colors.red(`\nAn unexpected error occurred: ${error.message}`),
+          );
+          Deno.exit(1);
         }
       })
-      // schema-remove
+
       .command('schema-remove', 'Remove specified schema by ID or name')
       .alias('sr')
       .option('-i, --id <id:string>', 'ID of the schema to remove')
@@ -50,7 +98,7 @@ export class SchemaCommandDispatcher {
         console.log('Removing the specified schema...');
         console.log('Options:', options);
       })
-      // schema-update
+
       .command('schema-update', 'Update an existing schema by ID or name')
       .alias('su')
       .option('-i, --id <id:string>', 'ID of the schema to update')
@@ -61,7 +109,7 @@ export class SchemaCommandDispatcher {
         console.log('Updating the specified schema...');
         console.log('Options:', options);
       })
-      // schema (details)
+
       .command('schema', 'Show API Schema details')
       .alias('s')
       .option('-i, --id <id:string>', 'ID of the schema to show')
