@@ -5,6 +5,7 @@ import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { GroupService } from '../services/groupService.ts';
 import { colors } from '@cliffy/ansi/colors';
 import { Group } from '../core/group.ts';
+import { Result } from '../utils/result.ts';
 
 interface CreateGroupArgsPure {
   name?: string;
@@ -61,11 +62,11 @@ export class GroupCommandDispatcher implements IDispatcher {
             .withLogic(async (input: CreateGroupArgs) => {
               return await this.groupService.createGroup(input);
             })
-            .withResultDisplay((result, input) => {
+            .withResultDisplay((result: Result) => {
               if (result.isSuccess()) {
                 console.log(
                   colors.green(
-                    `✅ Групу "${input.name}" успішно створено.`,
+                    `✅ Групу "${options.name}" успішно створено.`,
                   ),
                 );
               }

@@ -16,7 +16,7 @@ export class SchemaCommandPrinters {
   }
 
   public static displayListMode(
-    result: Result<SchemaListItemDto[]>,
+    result: Result,
     options: { detailed: boolean },
   ): void {
     if (result.isFailure()) {
@@ -24,7 +24,7 @@ export class SchemaCommandPrinters {
       return;
     }
 
-    const schemas = result.value;
+    const schemas = result.value as SchemaListItemDto[];
     if (!schemas || schemas.length === 0) {
       console.log(colors.yellow('No schemas found.'));
       return;
@@ -40,7 +40,7 @@ export class SchemaCommandPrinters {
       headers.push('Created', 'Last Used (Modified)');
     }
 
-    const body = schemas.map((s) => {
+    const body = schemas.map((s: SchemaListItemDto) => {
       const row = [
         s.id.toString(),
         s.name,
@@ -64,20 +64,20 @@ export class SchemaCommandPrinters {
   }
 
   public static async displayInteractiveMode(
-    result: Result<SchemaListItemDto[]>,
+    result: Result,
   ): Promise<void> {
     if (result.isFailure()) {
       console.error(colors.red(result.error || 'Failed to list schemas'));
       return;
     }
 
-    const schemas = result.value;
+    const schemas = result.value as SchemaListItemDto[];
     if (!schemas || schemas.length === 0) {
       console.log(colors.yellow('No schemas found.'));
       return;
     }
 
-    const promptOptions = schemas.map((s) => ({
+    const promptOptions = schemas.map((s: SchemaListItemDto) => ({
       name: `${s.name.padEnd(30)} ${colors.dim(`(Group: ${s.groupName || '-'})`)}`,
       value: s.id.toString(),
     }));
@@ -95,12 +95,11 @@ export class SchemaCommandPrinters {
     }
 
     const selectedSchema = schemas.find(
-      (s) => s.id.toString() === selectedIdStr,
+      (s: SchemaListItemDto) => s.id.toString() === selectedIdStr,
     );
 
     if (selectedSchema) {
       console.log(colors.green.bold(`\nSchema Details: ${selectedSchema.name}`));
-
       new Table()
         .header(['Property', 'Value'].map((h) => colors.cyan(h)))
         .body([

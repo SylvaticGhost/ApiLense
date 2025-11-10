@@ -25,7 +25,6 @@ export class SchemaService {
   ) {}
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
-    // ... (код 'loadSchema' без змін)
     if (args.url) {
       return await this.loadSchemaFromSource(
         args.url,
@@ -83,9 +82,7 @@ export class SchemaService {
     return Result.success(newSchemaId);
   }
 
-  async getSchemas(
-    args: ListSchemaArgs,
-  ): Promise<Result<SchemaListItemDto[]>> {
+  async getSchemas(args: ListSchemaArgs): Promise<Result> {
     const groupResult = await this.CheckGroupExists(args.group);
     if (groupResult.isFailure()) {
       return groupResult;
@@ -112,7 +109,7 @@ export class SchemaService {
 
   private async CheckGroupExists(
     groupRef: string | undefined,
-  ): Promise<Result<number | undefined>> {
+  ): Promise<Result> {
     if (!groupRef) {
       return Result.success(undefined);
     }

@@ -136,15 +136,14 @@ export function openApiToSimpleSchema(openApi: any) {
       if (typeof def !== 'object' || def === null || Array.isArray(def)) {
         continue;
       }
-
       console.info(`Processing endpoint: ${method.toUpperCase()} ${path}`);
 
       const parametersList = [
         ...(def.parameters ?? []),
-        ...(methods.parameters ?? []),
+        ...((methods as any).parameters ?? []),
       ];
 
-      const params =
+     const params =
         parametersList
           ?.filter((p: any) => p.in !== 'body')
           .map((p: any) => ({
@@ -223,8 +222,9 @@ export async function parseApiSchemaFromText(
   let data: any;
   try {
     data = JSON.parse(jsonText);
-  } catch (e) {
-    throw new Error(`Invalid JSON in schema: ${(e as Error).message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    throw new Error(`Invalid JSON in schema: ${message}`);
   }
 
   if ((data.openapi || data.swagger) && data.paths) {

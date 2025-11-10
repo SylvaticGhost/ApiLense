@@ -10,10 +10,6 @@ import { ApiSchema } from '../core/apiSchema.ts';
 export class GroupRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
 
-  /**
-   * НОВИЙ МЕТОД
-   * Створює нову групу в базі даних.
-   */
   async create(group: Group): Promise<Group> {
     const createdRecord = await this.prismaClient.group.create({
       data: {
@@ -23,7 +19,12 @@ export class GroupRepository {
         updatedAt: group.updatedAt,
       },
     });
-    return this.mapToDomain(createdRecord, []);
+
+    const mappedGroup = this.mapToDomain(createdRecord, []);
+    if (mappedGroup === null) {
+      throw new Error('Failed to map created group after creation.');
+    }
+    return mappedGroup;
   }
 
   async lastId(): Promise<number> {
@@ -60,7 +61,7 @@ export class GroupRepository {
   private mapToDomain(
     raw: PrismaGroup | null,
     schemas: PrismaSchema[] | undefined,
-  ) {
+  ): Group | null {
     if (!raw) {
       return null;
     }

@@ -82,9 +82,10 @@ export class SchemaCommandDispatcher {
           } else {
             await SchemaCommandPrinters.displayInteractiveMode(result);
           }
-        } catch (error) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
           console.error(
-            colors.red(`\nAn unexpected error occurred: ${error.message}`),
+            colors.red(`\nAn unexpected error occurred: ${message}`),
           );
           Deno.exit(1);
         }
