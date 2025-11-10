@@ -7,7 +7,7 @@ import { colors } from '@cliffy/ansi/colors';
 export class SchemaCommandPrinters {
   public static loadSchema(result: Result): void {
     if (result.isFailure()) {
-      console.error(colors.red(result.error || 'Failed to load schema'));
+      console.error(colors.red(result.value || 'Failed to load schema'));
     } else {
       console.log(
         colors.green(`Schema loaded successfully with ID: ${result.value}`),
@@ -20,7 +20,7 @@ export class SchemaCommandPrinters {
     options: { detailed: boolean },
   ): void {
     if (result.isFailure()) {
-      console.error(colors.red(result.error || 'Failed to list schemas'));
+      console.error(colors.red(result.value || 'Failed to list schemas'));
       return;
     }
 
@@ -67,7 +67,7 @@ export class SchemaCommandPrinters {
     result: Result,
   ): Promise<void> {
     if (result.isFailure()) {
-      console.error(colors.red(result.error || 'Failed to list schemas'));
+      console.error(colors.red(result.value || 'Failed to list schemas'));
       return;
     }
 
