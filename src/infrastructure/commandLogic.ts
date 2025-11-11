@@ -74,6 +74,16 @@ class CommandLogicBuilder<TArgs, TInput, TResult>
     return this.build();
   }
 
+  withResultDisplayMap(
+    statementDefinerConf: (definer: ResultDisplayStatementDefiner) => void,
+  ): CommandLogic<TArgs, TInput, TResult> {
+    this.resultDisplay = (result: Result) => {
+      const definer = new ResultDisplayStatementDefiner(result);
+      statementDefinerConf(definer);
+    };
+    return this.build();
+  }
+
   build(): CommandLogic<TArgs, TInput, TResult> {
     if (!this.validation) {
       throw new Error('Validation function is not defined');
@@ -93,6 +103,25 @@ class CommandLogicBuilder<TArgs, TInput, TResult>
   }
 }
 
+class ResultDisplayStatementDefiner {
+  constructor(private readonly result: Result) {}
+  private skip: boolean = false;
+
+  variant<TOut>(outDisplayFunc: (output: TOut) => void) {
+    if (this.skip) return this;
+
+    const output = this.result.castValue<TOut>();
+    console.info('Variant output:', output);
+
+    if (output !== null && output !== undefined) {
+      outDisplayFunc(output);
+      this.skip = true;
+    }
+
+    return this;
+  }
+}
+
 interface CommandLogicBuilderValidationStep<TArgs, TInput, TResult> {
   withValidation(
     argValidatorConfig: (argValidator: ArgValidator<TArgs>) => Result,
@@ -108,5 +137,9 @@ interface CommandLogicBuilderLogicStep<TArgs, TInput, TResult> {
 interface CommandLogicBuilderResultDisplayStep<TArgs, TInput, TResult> {
   withResultDisplay(
     resultDisplayFunc: (result: Result) => void,
+  ): CommandLogic<TArgs, TInput, TResult>;
+
+  withResultDisplayMap(
+    statementDefinerConf: (definer: ResultDisplayStatementDefiner) => void,
   ): CommandLogic<TArgs, TInput, TResult>;
 }
