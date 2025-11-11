@@ -30,4 +30,44 @@ export class RequestRunner {
       requestId: request.id,
     };
   }
+
+  async runMultiple(
+    requestsByThread: ApiCallRequest[][],
+    delayMs: number,
+  ): Promise<ApiCallReport[][]> {
+    const threadPromises = requestsByThread.map(async (requests) => {
+      const threadReports: ApiCallReport[] = [];
+      for (const request of requests) {
+        const report = await this.run(request);
+        threadReports.push(report);
+        await this.delay(delayMs);
+      }
+      return threadReports;
+    });
+
+    const results = await Promise.all(threadPromises);
+    return results;
+  }
+
+  async runConcurently(
+    requestsByIter: ApiCallRequest[][],
+    delayMs: number = 0,
+  ): Promise<ApiCallReport[][]> {
+    const reports: ApiCallReport[][] = [];
+    for (let i = 0; i < requestsByIter.length; i++) {
+      const reportByOneIter: ApiCallReport[] = [];
+      const promises = requestsByIter[i].map(async (request) => {
+        const report = await this.run(request);
+        reportByOneIter.push(report);
+      });
+      await Promise.all(promises);
+      reports.push(reportByOneIter);
+      await this.delay(delayMs);
+    }
+    return reports;
+  }
+
+  private async delay(ms: number) {
+    if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+  }
 }
