@@ -6,7 +6,7 @@ import {
   ListSchemaArgs,
   LoadSchemaArgs,
 } from '../contracts/schemaCommandsArgs.ts';
-import { colors } from '@std/fmt/colors';
+import * as colors from '@std/fmt/colors';
 
 export class SchemaCommandDispatcher {
   constructor(

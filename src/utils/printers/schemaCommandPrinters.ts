@@ -2,7 +2,7 @@ import { Result } from '../result.ts';
 import { SchemaListItemDto } from '../../contracts/schemaCommandsArgs.ts';
 import { Select } from '@cliffy/prompt';
 import { Table } from '@cliffy/table';
-import { colors } from '@std/fmt/colors';
+import * as colors from '@std/fmt/colors';
 
 export class SchemaCommandPrinters {
   public static loadSchema(result: Result): void {
