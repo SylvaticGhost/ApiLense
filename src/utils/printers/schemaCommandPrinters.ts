@@ -57,7 +57,7 @@ export class SchemaCommandPrinters {
     });
 
     new Table()
-      .header(headers.map((h) => colors.cyan.bold(h)))
+      .header(headers.map((h) => colors.bold(colors.cyan(h))))
       .body(body)
       .border(true)
       .render();
@@ -99,7 +99,7 @@ export class SchemaCommandPrinters {
     );
 
     if (selectedSchema) {
-     console.log(
+      console.log(
         colors.bold(
           colors.green(`\nSchema Details: ${selectedSchema.name}`),
         ),
