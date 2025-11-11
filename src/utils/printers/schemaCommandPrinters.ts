@@ -99,7 +99,11 @@ export class SchemaCommandPrinters {
     );
 
     if (selectedSchema) {
-      console.log(colors.green.bold(`\nSchema Details: ${selectedSchema.name}`));
+     console.log(
+        colors.bold(
+          colors.green(`\nSchema Details: ${selectedSchema.name}`),
+        ),
+      );
       new Table()
         .header(['Property', 'Value'].map((h) => colors.cyan(h)))
         .body([
