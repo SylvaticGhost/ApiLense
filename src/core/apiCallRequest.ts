@@ -84,4 +84,22 @@ export class ApiCallRequest {
 
     return requests;
   }
+
+  static createProggression(
+    schema: ApiSchema,
+    endpoint: Endpoint,
+    filling: TemplateFilling | null,
+    endCount: number,
+  ): ApiCallRequest[][] {
+    const requests: ApiCallRequest[][] = [];
+    for (let i = 0; i < endCount; i++) {
+      const arr: ApiCallRequest[] = [];
+      for (let j = 0; j <= i; j++) {
+        const req = ApiCallRequest.create(schema, endpoint, filling);
+        arr.push(req);
+      }
+      requests.push(arr);
+    }
+    return requests;
+  }
 }

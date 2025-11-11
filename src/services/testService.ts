@@ -28,6 +28,7 @@ export class TestService {
       numberOfRequests,
       concurrency,
       delayMs,
+      mode,
     } = parameters;
 
     const schema: ApiSchema | null = await this.schemaRepo.getById(schemaId);
@@ -70,12 +71,20 @@ export class TestService {
         `❯ No template filling provided by reference "${templateRef}"`,
       );
 
-    if (numberOfRequests > 1 || concurrency > 1)
+    if (mode == 'multiple')
       return await this.runMultipleRequests(
         schema,
         endpoint,
         templateFilling,
         numberOfRequests,
+        concurrency,
+        delayMs,
+      );
+    else if (mode == 'progression')
+      return await this.runProgressionRequests(
+        schema,
+        endpoint,
+        templateFilling,
         concurrency,
         delayMs,
       );
@@ -114,6 +123,27 @@ export class TestService {
       delayMs,
     );
     const testReport = TestReport.multiple(reports);
+    return Result.success(testReport);
+  }
+
+  private async runProgressionRequests(
+    schema: ApiSchema,
+    endpoint: Endpoint,
+    filling: TemplateFilling | null,
+    concurrency: number,
+    delayMs: number,
+  ): Promise<Result> {
+    const requests = ApiCallRequest.createProggression(
+      schema,
+      endpoint,
+      filling,
+      concurrency,
+    );
+    const reports: ApiCallReport[][] = await this.requestRunner.runConcurently(
+      requests,
+      delayMs,
+    );
+    const testReport = TestReport.progression(reports);
     return Result.success(testReport);
   }
 }

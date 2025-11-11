@@ -1,11 +1,11 @@
 import { ApiCallReport } from './apiCallReport.ts';
 
 export class TestReport {
-  mode: 'single' | 'multiple';
+  mode: 'single' | 'multiple' | 'progression';
   reports: ApiCallReport | ApiCallReport[][];
 
-  constructor(
-    mode: 'single' | 'multiple',
+  private constructor(
+    mode: 'single' | 'multiple' | 'progression',
     reports: ApiCallReport | ApiCallReport[][],
   ) {
     this.mode = mode;
@@ -18,5 +18,9 @@ export class TestReport {
 
   static multiple(reportsByThread: ApiCallReport[][]): TestReport {
     return new TestReport('multiple', reportsByThread);
+  }
+
+  static progression(reports: ApiCallReport[][]): TestReport {
+    return new TestReport('progression', reports);
   }
 }

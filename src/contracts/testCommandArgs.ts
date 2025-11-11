@@ -5,4 +5,5 @@ export interface RunEndpointCommandArgs {
   numberOfRequests: number;
   concurrency: number;
   delayMs: number;
+  mode: 'single' | 'multiple' | 'progression';
 }

@@ -11,6 +11,7 @@ import { RunEndpointCommandArgs } from '../contracts/testCommandArgs.ts';
 import { TestReport } from '../core/testReport.ts';
 import { PlotService } from '../services/plotService.ts';
 import { StatAnalizer } from '../core/statAnalizer.ts';
+import { TestResultPrinter } from '../utils/printers/testResultPrinter.ts';
 
 interface RunEndpointCommandArgsPure {
   schema?: number | undefined;
@@ -21,6 +22,7 @@ interface RunEndpointCommandArgsPure {
   concurrency?: number | undefined;
   delayMs?: number | undefined;
   analize?: boolean | undefined;
+  progression?: boolean | undefined;
 }
 
 export class TestCommandDispatcher implements IDispatcher {
@@ -53,6 +55,10 @@ export class TestCommandDispatcher implements IDispatcher {
         'Number of concurrent requests',
       )
       .option('-d --delay-ms <delayMs:number>', 'Delay between requests in ms')
+      .option(
+        '-p, --progression',
+        'Run in progrssion mode: start with 1 parallel call and increase to max concurrency. Number of request is ignored',
+      )
       .action(
         async (options) =>
           await CommandLogic.define<
@@ -103,6 +109,13 @@ export class TestCommandDispatcher implements IDispatcher {
                       .asNumber((numV) => numV.isNonNegative().isInteger()),
                 )
                 .map((a) => {
+                  const mode: 'single' | 'multiple' | 'progression' =
+                    a.numberOfRequests === 1 && a.concurrency === 1
+                      ? 'single'
+                      : a.progression
+                        ? 'progression'
+                        : 'multiple';
+
                   return {
                     schema: a.schema!,
                     endpoint: a.endpoint!,
@@ -110,6 +123,7 @@ export class TestCommandDispatcher implements IDispatcher {
                     numberOfRequests: a.numberOfRequests ?? 1,
                     concurrency: a.concurrency ?? 1,
                     delayMs: a.delayMs ?? 0,
+                    mode: mode,
                   } as RunEndpointCommandArgs;
                 }),
             )
@@ -118,81 +132,13 @@ export class TestCommandDispatcher implements IDispatcher {
             })
             .withResultDisplay((result) => {
               const testReport = result.castValueStrict<TestReport>();
-              if (testReport.mode === 'single') {
-                const report = testReport.reports as ApiCallReport;
-                const sb = new StringBuilder()
-                  .appendLine()
-                  .appendLine(colors.bold('📄 API Call Report:'))
-                  .appendLine(
-                    `Status: ${StatementPrinter.statusCodeColor(report.statusCode)}`,
-                  )
-                  .appendLine(`Response Time: ${report.timeTakenMs} ms`)
-                  .appendBuilderIf(options.printOutput, (sb) =>
-                    sb
-                      .appendLine('Response Body 📩:')
-                      .appendStringifiedObject(report.responseBody),
-                  )
-                  .appendLine();
-                console.info(sb.toString());
-              }
+              const printer = new TestResultPrinter(
+                this.plotService,
+                options.printOutput ?? false,
+                options.analize ?? false,
+              );
 
-              if (testReport.mode === 'multiple') {
-                const reportsByThread = testReport.reports as ApiCallReport[][];
-                const sb = new StringBuilder()
-                  .appendLine()
-                  .appendLine(
-                    colors.bold(
-                      `📄 API Call Reports for ${reportsByThread[0].length} calls in ${reportsByThread.length} threads:`,
-                    ),
-                  );
-
-                if (options.printOutput) {
-                  reportsByThread.forEach((reports, threadIndex) => {
-                    sb.appendLine()
-                      .appendLine(
-                        colors.underline(`-- Thread ${threadIndex + 1} --`),
-                      )
-                      .appendLine();
-
-                    reports.forEach((report, reportIndex) => {
-                      sb.appendLine(colors.bold(`Request ${reportIndex + 1}:`))
-                        .appendLine(
-                          `Status: ${StatementPrinter.statusCodeColor(
-                            report.statusCode,
-                          )}`,
-                        )
-                        .appendLine(`Response Time: ${report.timeTakenMs} ms`)
-                        .appendBuilderIf(options.printOutput, (sb) =>
-                          sb
-                            .appendLine('Response Body 📩:')
-                            .appendStringifiedObject(report.responseBody),
-                        );
-                    });
-                  });
-                }
-
-                console.info(sb.toString());
-
-                if (options.analize) {
-                  const statAnalizer = new StatAnalizer(reportsByThread);
-                  this.plotService.displayStatusCodeDistribution(
-                    statAnalizer.statusCodeDistribution(),
-                  );
-
-                  const numericStartReport =
-                    statAnalizer.getNumericStatistics();
-
-                  this.plotService.displayControlChart(
-                    statAnalizer.flatLatencyList(),
-                    numericStartReport,
-                  );
-
-                  if (reportsByThread.length > 1)
-                    this.plotService.displayNumericStatisticsByThread(
-                      statAnalizer.getNumericStatisticByThread(),
-                    );
-                }
-              }
+              printer.print(testReport);
             })
             .execute(options),
       );

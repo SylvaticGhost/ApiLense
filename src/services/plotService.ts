@@ -2,6 +2,7 @@ import { Table } from 'https://deno.land/x/cliffy@v0.25.4/table/mod.ts';
 import { colors } from '@cliffy/ansi/colors';
 import { NumericStartReport } from '../core/numericStartReport.ts';
 import { NumericStatAnalizer } from '../core/statAnalizer.ts';
+import { AggregatedResult } from '../core/aggregatedResult.ts';
 
 export class PlotService {
   displayStatusCodeDistribution(
@@ -224,5 +225,45 @@ export class PlotService {
     if (cv < 0.1) return colors.green(percent);
     else if (cv < 0.25) return colors.yellow(percent);
     else return colors.red(percent);
+  }
+
+  displayLoadTestStatisticsTable(data: AggregatedResult[]): void {
+    if (data.length === 0) return;
+
+    console.log(colors.bold('\n📊 Load Test Statistics by Parallelism:'));
+
+    const table = new Table()
+      .header([
+        colors.bold('Parallel requests'),
+        colors.bold('Min [ms]'),
+        colors.bold('Avg [ms]'),
+        colors.bold('Max [ms]'),
+        colors.bold('Max/Avg Ratio'),
+      ])
+      .body([]);
+
+    data.forEach((item) => {
+      const ratio = item.maxLatency / item.avgLatency;
+
+      const maxLatencyDisplay =
+        ratio > 2.0
+          ? colors.red.bold(item.maxLatency.toFixed(2))
+          : item.maxLatency.toFixed(2);
+
+      const ratioDisplay =
+        ratio > 3.0
+          ? colors.red(ratio.toFixed(2) + 'x')
+          : ratio.toFixed(2) + 'x';
+
+      table.push([
+        item.x.toString(),
+        item.minLatency?.toFixed(2) ?? 'N/A',
+        item.avgLatency.toFixed(2),
+        maxLatencyDisplay,
+        ratioDisplay,
+      ]);
+    });
+
+    table.padding(1).border(true).render();
   }
 }
