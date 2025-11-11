@@ -764,6 +764,7 @@
     "dependencies": [
       "jsr:@cliffy/ansi@^1.0.0-rc.8",
       "jsr:@cliffy/command@^1.0.0-rc.8",
+      "jsr:@cliffy/prompt@^1.0.0-rc.8",
       "jsr:@cliffy/table@^1.0.0-rc.8",
       "jsr:@db/sqlite@*",
       "jsr:@std/fs@*",
