@@ -1,8 +1,8 @@
 import { Result } from '../result.ts';
 import { SchemaListItemDto } from '../../contracts/schemaCommandsArgs.ts';
-import { Select } from '@cliffy/prompt/select';
+import { Select } from '@cliffy/prompt';
 import { Table } from '@cliffy/table';
-import { colors } from '@cliffy/ansi/colors';
+import { colors } from '@cliffy/ansi';
 
 export class SchemaCommandPrinters {
   public static loadSchema(result: Result): void {
