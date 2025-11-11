@@ -1,4 +1,5 @@
 import { Result } from '../utils/result.ts';
+import { NumberValidator } from './numberValidator.ts';
 
 export class ArgValidator<TArg> {
   constructor(private readonly arg: TArg) {}
@@ -109,6 +110,15 @@ class FieldValidator<TField>
     );
   }
 
+  asNumber(numValidatorConf: (numValidator: NumberValidator) => void): void {
+    if (this.result || this.skip) return;
+
+    const numberValidator = new NumberValidator(this.field, this.fieldName);
+    numValidatorConf(numberValidator);
+    const numberValidationResult = numberValidator.getResult();
+    this.result ??= numberValidationResult;
+  }
+
   notNull(): FieldValidator<TField> {
     return this.should(
       (field) => field !== null && field !== undefined,
@@ -151,6 +161,8 @@ interface IFieldValidatorConstraintStep<TField> {
   ): IFieldValidatorConstraintWithFinalizeStep<TField>;
 
   notNull(): IFieldValidatorConstraintWithFinalizeStep<TField>;
+
+  asNumber(numValidatorConf: (numValidator: NumberValidator) => void): void;
 }
 
 interface IFieldValidatorConstraintWithFinalizeStep<TField>

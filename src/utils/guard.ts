@@ -35,6 +35,13 @@ class GuardClause {
       throw new Error(`${variableName} must be not null or undefined.`);
     }
   }
+
+  notEqual<T>(var1: T, var2: T, var1Name: string, var2Name: string) {
+    if (var1 !== var2)
+      throw new Error(
+        `variable ${var1Name} (value: ${var1}) doesn't equal ${var2Name} (value: ${var2})`,
+      );
+  }
 }
 
 export class Guard {
