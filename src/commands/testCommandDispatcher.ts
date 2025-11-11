@@ -9,6 +9,8 @@ import { StatementPrinter } from '../utils/printers/statementPrinter.ts';
 import { StringBuilder } from '../utils/stringBuilder.ts';
 import { RunEndpointCommandArgs } from '../contracts/testCommandArgs.ts';
 import { TestReport } from '../core/testReport.ts';
+import { PlotService } from '../services/plotService.ts';
+import { StatAnalizer } from '../core/statAnalizer.ts';
 
 interface RunEndpointCommandArgsPure {
   schema?: number | undefined;
@@ -18,16 +20,19 @@ interface RunEndpointCommandArgsPure {
   numberOfRequests?: number | undefined;
   concurrency?: number | undefined;
   delayMs?: number | undefined;
+  analize?: boolean | undefined;
 }
 
 export class TestCommandDispatcher implements IDispatcher {
   private readonly testService: TestService;
+  private readonly plotService: PlotService;
 
   constructor(
     private readonly command: Command,
     private readonly container: DependencyContainer,
   ) {
     this.testService = this.container.resolve<TestService>('TestService');
+    this.plotService = this.container.resolve<PlotService>('PlotService');
   }
 
   registerCommands(): void {
@@ -37,7 +42,8 @@ export class TestCommandDispatcher implements IDispatcher {
       .option('-s, --schema <schema:number>', 'The schema to use for the test')
       .option('-e, --endpoint <endpoint:string>', 'The endpoint to test')
       .option('-t, --template <template:string>', 'The template to apply')
-      .option('--print-output <printOutput:boolean>', 'Whether to print output')
+      .option('--print-output', 'Whether to print output')
+      .option('-a, --analize', 'Run analysis and show plots')
       .option(
         '-n --number-of-requests <numberOfRequests:number>',
         'Number of requests to run',
@@ -136,34 +142,56 @@ export class TestCommandDispatcher implements IDispatcher {
                   .appendLine()
                   .appendLine(
                     colors.bold(
-                      `📄 API Call Reports for ${reportsByThread.length} threads:`,
+                      `📄 API Call Reports for ${reportsByThread[0].length} calls in ${reportsByThread.length} threads:`,
                     ),
                   );
 
-                reportsByThread.forEach((reports, threadIndex) => {
-                  sb.appendLine()
-                    .appendLine(
-                      colors.underline(`-- Thread ${threadIndex + 1} --`),
-                    )
-                    .appendLine();
-
-                  reports.forEach((report, reportIndex) => {
-                    sb.appendLine(colors.bold(`Request ${reportIndex + 1}:`))
+                if (options.printOutput) {
+                  reportsByThread.forEach((reports, threadIndex) => {
+                    sb.appendLine()
                       .appendLine(
-                        `Status: ${StatementPrinter.statusCodeColor(
-                          report.statusCode,
-                        )}`,
+                        colors.underline(`-- Thread ${threadIndex + 1} --`),
                       )
-                      .appendLine(`Response Time: ${report.timeTakenMs} ms`)
-                      .appendBuilderIf(options.printOutput, (sb) =>
-                        sb
-                          .appendLine('Response Body 📩:')
-                          .appendStringifiedObject(report.responseBody),
-                      );
+                      .appendLine();
+
+                    reports.forEach((report, reportIndex) => {
+                      sb.appendLine(colors.bold(`Request ${reportIndex + 1}:`))
+                        .appendLine(
+                          `Status: ${StatementPrinter.statusCodeColor(
+                            report.statusCode,
+                          )}`,
+                        )
+                        .appendLine(`Response Time: ${report.timeTakenMs} ms`)
+                        .appendBuilderIf(options.printOutput, (sb) =>
+                          sb
+                            .appendLine('Response Body 📩:')
+                            .appendStringifiedObject(report.responseBody),
+                        );
+                    });
                   });
-                });
+                }
 
                 console.info(sb.toString());
+
+                if (options.analize) {
+                  const statAnalizer = new StatAnalizer(reportsByThread);
+                  this.plotService.displayStatusCodeDistribution(
+                    statAnalizer.statusCodeDistribution(),
+                  );
+
+                  const numericStartReport =
+                    statAnalizer.getNumericStatistics();
+
+                  this.plotService.displayControlChart(
+                    statAnalizer.flatLatencyList(),
+                    numericStartReport,
+                  );
+
+                  if (reportsByThread.length > 1)
+                    this.plotService.displayNumericStatisticsByThread(
+                      statAnalizer.getNumericStatisticByThread(),
+                    );
+                }
               }
             })
             .execute(options),
