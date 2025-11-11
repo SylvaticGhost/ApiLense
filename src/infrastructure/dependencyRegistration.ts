@@ -11,7 +11,7 @@ import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepos
 import { RequestRunner } from './requestRunner.ts';
 import { EndpointService } from '../services/endpointService.ts';
 import { TestService } from '../services/testService.ts';
-import { PlotService } from '../services/plotService.ts';
+import { GroupService } from '../services/groupService.ts';
 
 export class DependencyRegistration {
   constructor(private readonly container: DependencyContainer) {}
@@ -39,8 +39,6 @@ export class DependencyRegistration {
       (c) => new EndpointMetaDataRepository(c),
       'EndpointMetaDataRepository',
     );
-
-    this.container.register(() => new PlotService(), 'PlotService');
 
     this.container.register(() => {
       const location = Deno.env.get('SCHEMA_LOCATION');

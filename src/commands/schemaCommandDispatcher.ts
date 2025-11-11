@@ -6,7 +6,7 @@ import {
   ListSchemaArgs,
   LoadSchemaArgs,
 } from '../contracts/schemaCommandsArgs.ts';
-import { colors } from '@cliffy/ansi/colors';
+import { colors } from '@std/fmt/colors';
 
 export class SchemaCommandDispatcher {
   constructor(
@@ -25,14 +25,13 @@ export class SchemaCommandDispatcher {
       .action(async (options) => {
         const schemaService =
           this.container.resolve<SchemaService>('SchemaService');
-        const args: LoadSchemaArgs = { // Використовуємо контракт
+        const args: LoadSchemaArgs = {
           file: options.file,
           url: options.url,
           name: options.name,
           group: options.group,
         };
         const result = await schemaService.loadSchema(args);
-
         SchemaCommandPrinters.loadSchema(result);
       })
 

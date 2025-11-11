@@ -3,7 +3,7 @@ import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { IDispatcher } from '../infrastructure/mainDispatcher.ts';
 import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { GroupService } from '../services/groupService.ts';
-import { colors } from '@cliffy/ansi/colors';
+import { colors } from '@std/fmt/colors';
 import { Group } from '../core/group.ts';
 import { Result } from '../utils/result.ts';
 
@@ -66,7 +66,7 @@ export class GroupCommandDispatcher implements IDispatcher {
               if (result.isSuccess()) {
                 console.log(
                   colors.green(
-                    `✅ Group "${options.name}" was created successfully.`,
+                    `✅ Групу "${options.name}" успішно створено.`,
                   ),
                 );
               }
