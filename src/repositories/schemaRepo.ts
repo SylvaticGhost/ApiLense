@@ -12,13 +12,13 @@ export class SchemaRepository {
   async save(schema: ApiSchema) {
     await this.prismaClient.schema.create({
       data: {
-        // id генерується автоматично
+        id: schema.id,
         name: schema.name,
         url: schema.url ?? '',
         filePath: schema.filePath ?? '',
         createdAt: schema.createdAt,
         updatedAt: schema.updatedAt,
-        groupId: schema.groupId ?? null, // Використовуємо 'null' для "без групи"
+        groupId: schema.groupId ?? null,
       },
     });
   }
@@ -58,15 +58,11 @@ export class SchemaRepository {
     );
   }
 
-  /**
-   * МЕТОД, НЕОБХІДНИЙ ДЛЯ 'schema-list'
-   * Знаходить схеми з опціональною фільтрацією та пагінацією.
-   */
   async find(options: {
     groupId?: number;
     page: number;
     size?: number;
-  }): Promise<(Schema & { Group: Group | null })[]> { // <--- ЗМІНЕНО ТИП
+  }): Promise<(Schema & { Group: Group | null })[]> {
     const { groupId, page, size } = options;
 
     const skip = size ? (page - 1) * size : 0;
@@ -80,7 +76,7 @@ export class SchemaRepository {
     const schemas = await this.prismaClient.schema.findMany({
       where: where,
       include: {
-        Group: true, // ⭐️ ВИПРАВЛЕНО ТУТ: 'group' -> 'Group'
+        Group: true,
       },
       orderBy: {
         name: 'asc',

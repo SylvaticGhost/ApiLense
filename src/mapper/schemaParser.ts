@@ -24,14 +24,7 @@ function schemaToPlainBody(
   if (!schema || depth > 15) return undefined;
 
   if (schema.$ref) {
-    let ref = String(schema.$ref);
-    if (ref.startsWith('#/components/schemas/')) {
-      ref = ref.replace('#/components/schemas/', '');
-    } else if (ref.startsWith('#/definitions/')) {
-      ref = ref.replace('#/definitions/', '');
-    } else {
-      ref = ref.split('/').pop() || '';
-    }
+    const ref = schema.$ref.replace(/^#\/components\/schemas\//, '');
 
     const resolved = schemasMap[ref];
     if (!resolved) return undefined;

@@ -31,7 +31,7 @@ model Schema {
   updatedAt DateTime        @updatedAt @map("updated_at")
   url       String
   filePath  String          @map("file_path")
-  groupId   Int?
+  groupId   Int?            @map("group_id")
   Group     Group?  @relation(fields: [groupId], references: [id])
   lastUsed  SchemaLastUsed?
 

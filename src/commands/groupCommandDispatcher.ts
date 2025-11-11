@@ -66,7 +66,7 @@ export class GroupCommandDispatcher implements IDispatcher {
               if (result.isSuccess()) {
                 console.log(
                   colors.green(
-                    `✅ Групу "${options.name}" успішно створено.`,
+                    `✅ Group "${options.name}" was created successfully.`,
                   ),
                 );
               }
