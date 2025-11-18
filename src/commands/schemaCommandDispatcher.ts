@@ -2,12 +2,23 @@
 import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { SchemaService } from '../services/schemaService.ts';
 import { SchemaCommandPrinters } from '../utils/printers/schemaCommandPrinters.ts';
+import { CommandLogic } from '../infrastructure/commandLogic.ts';
+import { SchemaRemoveArgs } from '../contracts/schemaCommandsArgs.ts';
+import { Result } from '../utils/result.ts';
+
+interface SchemaRemovePureArgs {
+  id?: number | undefined;
+}
 
 export class SchemaCommandDispatcher {
+  private readonly schemaService: SchemaService;
+
   constructor(
     private readonly command: Command,
     private readonly container: DependencyContainer,
-  ) {}
+  ) {
+    this.schemaService = this.container.resolve<SchemaService>('SchemaService');
+  }
 
   public registerCommands(): void {
     this.command
@@ -19,15 +30,13 @@ export class SchemaCommandDispatcher {
       .option('-n, --name <name:string>', 'Name of the schema')
       .option('-g, --group <group:string>', 'Group to assign the schema to')
       .action(async (options) => {
-        const schemaService =
-          this.container.resolve<SchemaService>('SchemaService');
         const args = {
           file: options.file,
           url: options.url,
           name: options.name,
           group: options.group,
         };
-        const result = await schemaService.loadSchema(args);
+        const result = await this.schemaService.loadSchema(args);
 
         SchemaCommandPrinters.loadSchema(result);
       })
@@ -44,11 +53,36 @@ export class SchemaCommandDispatcher {
       // schema-remove
       .command('schema-remove', 'Remove specified schema by ID or name')
       .alias('sr')
-      .option('-i, --id <id:string>', 'ID of the schema to remove')
-      .option('-n, --name <name:string>', 'Name of the schema to remove')
-      .action((options) => {
-        console.log('Removing the specified schema...');
-        console.log('Options:', options);
+      .option('-i, --id <id:number>', 'ID of the schema to remove')
+      // .option('-n, --name <name:string>', 'Name of the schema to remove')
+      .action(async (options) => {
+        await CommandLogic.define<
+          SchemaRemovePureArgs,
+          SchemaRemoveArgs,
+          string
+        >()
+          .withValidation((argValidator) =>
+            argValidator
+              .for(
+                (a) => a.id,
+                (v) =>
+                  v
+                    .defineName('schema id')
+                    .notNull()
+                    .asNumber((nv) => nv.isNatural()),
+              )
+              .map((args) => {
+                return { id: args.id! } as SchemaRemoveArgs;
+              }),
+          )
+          .withLogic(async (args) => {
+            const result = await this.schemaService.removeSchema(args);
+            return result;
+          })
+          .withResultDisplay((result) => {
+            console.info(`Schema removed successfully`);
+          })
+          .execute(options);
       })
       // schema-update
       .command('schema-update', 'Update an existing schema by ID or name')

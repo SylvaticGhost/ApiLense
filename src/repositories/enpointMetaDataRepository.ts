@@ -18,6 +18,12 @@ export class EndpointMetaDataRepository {
     });
   }
 
+  async deleteBySchemaId(schemaId: number): Promise<void> {
+    await this.prismaClient.endpointMetaData.deleteMany({
+      where: { schemaId: schemaId },
+    });
+  }
+
   async getByStringParameter(
     schemaId: number,
     parameter: string,

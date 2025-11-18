@@ -22,4 +22,6 @@ export class SchemaFileRepository {
     const content = await Deno.readTextFile(filePath);
     return JSON.parse(content);
   }
+
+  // async deleteSchemaFile(
 }

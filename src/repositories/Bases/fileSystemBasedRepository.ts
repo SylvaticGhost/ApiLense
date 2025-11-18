@@ -47,4 +47,10 @@ export abstract class FileSystemBasedRepository {
       throw error;
     }
   }
+
+  protected async deleteDirIfExists(dirPath: string): Promise<void> {
+    if (await this.fileExistst(dirPath)) {
+      await Deno.remove(dirPath, { recursive: true });
+    }
+  }
 }

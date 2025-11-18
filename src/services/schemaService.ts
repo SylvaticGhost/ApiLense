@@ -1,4 +1,7 @@
-import { LoadSchemaArgs } from '../contracts/schemaCommandsArgs.ts';
+import {
+  LoadSchemaArgs,
+  SchemaRemoveArgs,
+} from '../contracts/schemaCommandsArgs.ts';
 import { Result } from '../utils/result.ts';
 import { StringValidators } from '../validators/stringValidators.ts';
 import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
@@ -9,6 +12,7 @@ import { parseApiSchemaFromText } from '../mapper/schemaParser.ts';
 import { Endpoint } from '../core/endpoint.ts';
 import { EndpointRepository } from '../repositories/endpointRepository.ts';
 import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
+import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 
 export class SchemaService {
   constructor(
@@ -17,6 +21,7 @@ export class SchemaService {
     private readonly schemaRepo: SchemaRepository,
     private readonly endpointRepo: EndpointRepository,
     private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
+    private readonly templateFillingRepository: TemplateFillingRepository,
   ) {}
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
@@ -39,6 +44,20 @@ export class SchemaService {
     } else {
       return Result.failure('Either url or file must be provided', 400);
     }
+  }
+
+  async removeSchema(args: SchemaRemoveArgs): Promise<Result> {
+    const schemaId = args.id;
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) {
+      return Result.notFound(`Schema with id ${schemaId} not found`);
+    }
+
+    await this.templateFillingRepository.deleteBySchemaId(schemaId);
+    await this.endpointMetaDataRepository.deleteBySchemaId(schemaId);
+    await this.endpointRepo.deleteBySchemaId(schemaId);
+    await this.schemaRepo.deleteById(schemaId);
+    return Result.success('Schema removed successfully');
   }
 
   /**

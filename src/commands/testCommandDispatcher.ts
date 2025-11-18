@@ -4,13 +4,9 @@ import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { ApiCallReport } from '../core/apiCallReport.ts';
 import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
 import { TestService } from '../services/testService.ts';
-import { colors } from '@cliffy/ansi/colors';
-import { StatementPrinter } from '../utils/printers/statementPrinter.ts';
-import { StringBuilder } from '../utils/stringBuilder.ts';
 import { RunEndpointCommandArgs } from '../contracts/testCommandArgs.ts';
 import { TestReport } from '../core/testReport.ts';
 import { PlotService } from '../services/plotService.ts';
-import { StatAnalizer } from '../core/statAnalizer.ts';
 import { TestResultPrinter } from '../utils/printers/testResultPrinter.ts';
 
 interface RunEndpointCommandArgsPure {

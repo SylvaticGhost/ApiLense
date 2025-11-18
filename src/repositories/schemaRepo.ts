@@ -52,4 +52,10 @@ export class SchemaRepository {
       record.filePath || undefined,
     );
   }
+
+  async deleteById(id: number): Promise<void> {
+    await this.prismaClient.schema.delete({
+      where: { id: id },
+    });
+  }
 }

@@ -27,4 +27,9 @@ export class TemplateFillingRepository extends FileSystemBasedRepository {
       TemplateFilling.fromJson,
     );
   }
+
+  deleteBySchemaId(schemaId: number): Promise<void> {
+    const dirPath = `volume/fillings/${schemaId}`;
+    return super.deleteDirIfExists(dirPath);
+  }
 }
