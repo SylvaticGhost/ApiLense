@@ -58,4 +58,34 @@ export class SchemaRepository {
       where: { id: id },
     });
   }
+
+  async list(skip: number, take: number, groupFilter?: string) {
+    const where: any = {};
+
+    if (groupFilter) {
+      const num = Number(groupFilter);
+      const conditions: any[] = [{ name: { contains: groupFilter } }];
+
+      // If filter is a number, it could be an ID
+      if (!isNaN(num)) {
+        conditions.push({ id: num });
+      }
+
+      where.Group = {
+        OR: conditions,
+      };
+    }
+
+    return await this.prismaClient.schema.findMany({
+      where,
+      skip,
+      take,
+      include: {
+        Group: true,
+      },
+      orderBy: {
+        id: 'asc',
+      },
+    });
+  }
 }

@@ -1,5 +1,6 @@
 import {
   LoadSchemaArgs,
+  SchemaListArgs,
   SchemaRemoveArgs,
 } from '../contracts/schemaCommandsArgs.ts';
 import { Result } from '../utils/result.ts';
@@ -58,6 +59,14 @@ export class SchemaService {
     await this.endpointRepo.deleteBySchemaId(schemaId);
     await this.schemaRepo.deleteById(schemaId);
     return Result.success('Schema removed successfully');
+  }
+
+  public async listSchemas(args: SchemaListArgs): Promise<Result> {
+    const skip = (args.page - 1) * args.size;
+
+    const schemas = await this.schemaRepo.list(skip, args.size, args.group);
+
+    return Result.success(schemas);
   }
 
   /**

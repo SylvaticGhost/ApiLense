@@ -18,10 +18,10 @@ datasource db {
 model Group {
   id        Int      @id @default(autoincrement())
   name      String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
   color     String
   Schemas   Schema[]
+
+  @@map("groups")
 }
 
 model Schema {
@@ -53,4 +53,6 @@ model SchemaLastUsed {
   schemaId Int      @id @map("schema_id")
   lastUsed DateTime @default(now()) @map("last_used_at")
   Schema   Schema   @relation(fields: [schemaId], references: [id])
+
+  @@map("schema_last_using")
 }
