@@ -31,4 +31,9 @@ export class EndpointRepository extends FileSystemBasedRepository {
     const dirPath = `volume/schemas/${schemaId}/endpoints`;
     return super.ensureDirectoryExists(dirPath);
   }
+
+  public deleteBySchemaId(schemaId: number): Promise<void> {
+    const dirPath = `volume/schemas/${schemaId}`;
+    return super.deleteDirIfExists(dirPath);
+  }
 }

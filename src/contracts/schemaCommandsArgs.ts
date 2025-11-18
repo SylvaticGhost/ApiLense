@@ -4,3 +4,7 @@ export interface LoadSchemaArgs {
   name?: string;
   group?: string;
 }
+
+export interface SchemaRemoveArgs {
+  id: number;
+}

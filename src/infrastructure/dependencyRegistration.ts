@@ -59,22 +59,13 @@ export class DependencyRegistration {
     }, 'TemplateFillingRepository');
 
     this.container.register((c: DependencyContainer): SchemaService => {
-      const groupRepo = c.resolve<GroupRepository>('GroupRepository');
-      const schemaRepo = c.resolve<SchemaRepository>('SchemaRepository');
-      const schemaFileRepo = c.resolve<SchemaFileRepository>(
-        'SchemaFileRepository',
-      );
-      const endpointRepo = c.resolve<EndpointRepository>('EndpointRepository');
-      const endpointMetaDataRepository = c.resolve<EndpointMetaDataRepository>(
-        'EndpointMetaDataRepository',
-      );
-
       return new SchemaService(
-        schemaFileRepo,
-        groupRepo,
-        schemaRepo,
-        endpointRepo,
-        endpointMetaDataRepository,
+        c.resolve<SchemaFileRepository>('SchemaFileRepository'),
+        c.resolve<GroupRepository>('GroupRepository'),
+        c.resolve<SchemaRepository>('SchemaRepository'),
+        c.resolve<EndpointRepository>('EndpointRepository'),
+        c.resolve<EndpointMetaDataRepository>('EndpointMetaDataRepository'),
+        c.resolve<TemplateFillingRepository>('TemplateFillingRepository'),
       );
     }, 'SchemaService');
 
