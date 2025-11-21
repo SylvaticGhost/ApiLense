@@ -8,3 +8,10 @@ export interface LoadSchemaArgs {
 export interface SchemaRemoveArgs {
   id: number;
 }
+
+export interface SchemaListArgs {
+  group?: string;
+  page: number;
+  size: number;
+  detailed?: boolean;
+}
