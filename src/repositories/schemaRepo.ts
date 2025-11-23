@@ -88,4 +88,15 @@ export class SchemaRepository {
       },
     });
   }
+
+  async deleteByGroupId(groupId: number): Promise<void> {
+    await this.prismaClient.schema.deleteMany({ where: { groupId } });
+  }
+
+  async transferBetweenGroups(fromGroupId: number, toGroupId: number) {
+    return await this.prismaClient.schema.updateMany({
+      where: { groupId: fromGroupId },
+      data: { groupId: toGroupId },
+    });
+  }
 }

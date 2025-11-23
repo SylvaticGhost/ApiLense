@@ -27,26 +27,26 @@ export class GroupService {
     }
 
     await this.groupRepo.update(id, { name, color });
-    return Result.success('ok');
+    // No textual payload required for consumers; return success without arbitrary text
+    return Result.success();
   }
 
   async deleteGroup(id: number, moveToDefault = false): Promise<Result> {
     const group = await this.groupRepo.getById(id);
     if (!group) return Result.notFound(`Group with id ${id} not found`);
 
+    // Prevent accidental deletion of the default group
+    if (id === 0) return Result.badRequest('Default group cannot be deleted');
+
     if (moveToDefault) {
       // default group id expected to be 0
       const defaultId = 0;
-      await this.groupRepo.moveSchemasTo(id, defaultId);
+      await this.schemaRepo.transferBetweenGroups(id, defaultId);
       await this.groupRepo.deleteById(id);
       return Result.success('Group deleted and schemas moved to default');
     } else {
-      // delete schemas in group first
-      // delete schemas via schemaRepo
-      const schemas = await this.schemaRepo.list(0, 10000, String(id));
-      for (const s of schemas) {
-        await this.schemaRepo.deleteById(s.id);
-      }
+      // delete schemas in group in a single DB call
+      await this.schemaRepo.deleteByGroupId(id);
       await this.groupRepo.deleteById(id);
       return Result.success('Group and its schemas deleted');
     }

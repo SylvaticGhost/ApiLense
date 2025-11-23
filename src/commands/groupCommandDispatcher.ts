@@ -71,8 +71,8 @@ export class GroupCommandDispatcher implements IDispatcher {
       .option('--move-to-default', 'Move schemas to default group instead of deleting them')
       .action(async (options: any) => {
         const id = Number(options.id);
-        if (isNaN(id)) {
-          console.error('Valid id is required');
+        if (!Number.isInteger(id) || id < 1) {
+          console.error('Valid id (natural number >= 1) is required');
           return;
         }
 
@@ -94,10 +94,17 @@ export class GroupCommandDispatcher implements IDispatcher {
         const isListMode = options.listMode || false;
         const isInteractive = options.interactiveMode && !isListMode;
 
+        const isNatural = (n: any) => Number.isInteger(Number(n)) && Number(n) >= 1;
+
         if (isInteractive) {
           // interactive with arrow navigation similar to schemas
           let currentPage = Number(options.page) || 1;
           const pageSize = Number(options.size) || 10;
+
+          if (!isNatural(currentPage) || !isNatural(pageSize)) {
+            console.error('Page and size must be natural numbers (>= 1)');
+            return;
+          }
 
           while (true) {
             const groups = await groupService.listGroups(currentPage, pageSize);
@@ -161,6 +168,11 @@ export class GroupCommandDispatcher implements IDispatcher {
           // list mode
           const page = Number(options.page) || 1;
           const size = Number(options.size) || 10;
+
+          if (!isNatural(page) || !isNatural(size)) {
+            console.error('Page and size must be natural numbers (>= 1)');
+            return;
+          }
           const groups = await groupService.listGroups(page, size);
           if (!groups || groups.length === 0) {
             console.log('No groups found.');
