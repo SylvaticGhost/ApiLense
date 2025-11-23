@@ -36,4 +36,23 @@ export class StringValidators {
     }
     return Result.success();
   }
+
+  static validateName(name: string): Result {
+    if (!name || name.trim() === '')
+      return Result.badRequest('Name cannot be empty');
+
+    const trimmed = name.trim();
+    if (trimmed.length < 2) return Result.badRequest('Name is too short');
+    if (trimmed.length > 100) return Result.badRequest('Name is too long (max 100 chars)');
+
+    // Disallow control characters and newlines (check by char code)
+    for (let i = 0; i < trimmed.length; i++) {
+      const code = trimmed.charCodeAt(i);
+      if (code === 13 || code === 10 || code < 32) {
+        return Result.badRequest('Name contains invalid characters');
+      }
+    }
+
+    return Result.success();
+  }
 }
