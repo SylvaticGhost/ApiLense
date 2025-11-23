@@ -6,6 +6,7 @@ import { SchemaService } from '../services/schemaService.ts';
 import { Select } from '@cliffy/prompt';
 import { Table } from '@cliffy/table';
 import { StringValidators } from '../validators/stringValidators.ts';
+import { NumberValidator } from '../validators/numberValidator.ts';
 
 export class GroupCommandDispatcher implements IDispatcher {
   constructor(
@@ -52,8 +53,9 @@ export class GroupCommandDispatcher implements IDispatcher {
       .option('-c, --color <color:string>', 'New color for the group')
       .action(async (options: any) => {
         const id = Number(options.id);
-        if (isNaN(id)) {
-          console.error('Valid id is required');
+        const idCheck = new NumberValidator(id, 'id').isPositive().getResult();
+        if (idCheck) {
+          console.error(idCheck.errorMessage);
           return;
         }
 
@@ -71,8 +73,9 @@ export class GroupCommandDispatcher implements IDispatcher {
       .option('--move-to-default', 'Move schemas to default group instead of deleting them')
       .action(async (options: any) => {
         const id = Number(options.id);
-        if (!Number.isInteger(id) || id < 1) {
-          console.error('Valid id (natural number >= 1) is required');
+        const idCheck = new NumberValidator(id, 'id').isPositive().getResult();
+        if (idCheck) {
+          console.error(idCheck.errorMessage);
           return;
         }
 
@@ -80,7 +83,11 @@ export class GroupCommandDispatcher implements IDispatcher {
         if (result.isFailure()) {
           console.error(result.errorMessage);
         } else {
-          console.log(result.value);
+          if (options.moveToDefault) {
+            console.log('Group deleted and schemas moved to default');
+          } else {
+            console.log('Group and its schemas deleted');
+          }
         }
       })
 
@@ -94,15 +101,19 @@ export class GroupCommandDispatcher implements IDispatcher {
         const isListMode = options.listMode || false;
         const isInteractive = options.interactiveMode && !isListMode;
 
-        const isNatural = (n: any) => Number.isInteger(Number(n)) && Number(n) >= 1;
-
         if (isInteractive) {
           // interactive with arrow navigation similar to schemas
           let currentPage = Number(options.page) || 1;
           const pageSize = Number(options.size) || 10;
 
-          if (!isNatural(currentPage) || !isNatural(pageSize)) {
-            console.error('Page and size must be natural numbers (>= 1)');
+          const pageCheck = new NumberValidator(currentPage, 'page').isPositive().getResult();
+          const sizeCheck = new NumberValidator(pageSize, 'size').isPositive().getResult();
+          if (pageCheck) {
+            console.error(pageCheck.errorMessage);
+            return;
+          }
+          if (sizeCheck) {
+            console.error(sizeCheck.errorMessage);
             return;
           }
 
@@ -169,8 +180,14 @@ export class GroupCommandDispatcher implements IDispatcher {
           const page = Number(options.page) || 1;
           const size = Number(options.size) || 10;
 
-          if (!isNatural(page) || !isNatural(size)) {
-            console.error('Page and size must be natural numbers (>= 1)');
+          const pageCheck = new NumberValidator(page, 'page').isPositive().getResult();
+          const sizeCheck = new NumberValidator(size, 'size').isPositive().getResult();
+          if (pageCheck) {
+            console.error(pageCheck.errorMessage);
+            return;
+          }
+          if (sizeCheck) {
+            console.error(sizeCheck.errorMessage);
             return;
           }
           const groups = await groupService.listGroups(page, size);

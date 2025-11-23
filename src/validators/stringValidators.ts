@@ -45,12 +45,11 @@ export class StringValidators {
     if (trimmed.length < 2) return Result.badRequest('Name is too short');
     if (trimmed.length > 100) return Result.badRequest('Name is too long (max 100 chars)');
 
-    // Disallow control characters and newlines (check by char code)
-    for (let i = 0; i < trimmed.length; i++) {
-      const code = trimmed.charCodeAt(i);
-      if (code === 13 || code === 10 || code < 32) {
-        return Result.badRequest('Name contains invalid characters');
-      }
+    // Allow letters, numbers, spaces and common punctuation. Disallow control chars.
+    // Regex: letters, digits, space, underscore, hyphen, dot, parentheses
+    const validNameRegex = /^[A-Za-z0-9 _\-\.\(\)]+$/;
+    if (!validNameRegex.test(trimmed)) {
+      return Result.badRequest('Name contains invalid characters');
     }
 
     return Result.success();

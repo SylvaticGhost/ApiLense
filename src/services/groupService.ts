@@ -43,12 +43,12 @@ export class GroupService {
       const defaultId = 0;
       await this.schemaRepo.transferBetweenGroups(id, defaultId);
       await this.groupRepo.deleteById(id);
-      return Result.success('Group deleted and schemas moved to default');
+      return Result.success();
     } else {
       // delete schemas in group in a single DB call
       await this.schemaRepo.deleteByGroupId(id);
       await this.groupRepo.deleteById(id);
-      return Result.success('Group and its schemas deleted');
+      return Result.success();
     }
   }
 
