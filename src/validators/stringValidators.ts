@@ -36,4 +36,22 @@ export class StringValidators {
     }
     return Result.success();
   }
+
+  static validateName(name: string): Result {
+    if (!name || name.trim() === '')
+      return Result.badRequest('Name cannot be empty');
+
+    const trimmed = name.trim();
+    if (trimmed.length < 2) return Result.badRequest('Name is too short');
+    if (trimmed.length > 100) return Result.badRequest('Name is too long (max 100 chars)');
+
+    // Allow letters, numbers, spaces and common punctuation. Disallow control chars.
+    // Regex: letters, digits, space, underscore, hyphen, dot, parentheses
+    const validNameRegex = /^[A-Za-z0-9 _\-\.\(\)]+$/;
+    if (!validNameRegex.test(trimmed)) {
+      return Result.badRequest('Name contains invalid characters');
+    }
+
+    return Result.success();
+  }
 }

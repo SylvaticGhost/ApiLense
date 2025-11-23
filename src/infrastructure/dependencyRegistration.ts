@@ -7,6 +7,7 @@ import { PrismaClient } from '../../prisma/generated/client.ts';
 import { EndpointRepository } from '../repositories/endpointRepository.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { TemplateFillingService } from '../services/templateFillingService.ts';
+import { GroupService } from '../services/groupService.ts';
 import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
 import { RequestRunner } from './requestRunner.ts';
 import { EndpointService } from '../services/endpointService.ts';
@@ -68,6 +69,13 @@ export class DependencyRegistration {
         c.resolve<TemplateFillingRepository>('TemplateFillingRepository'),
       );
     }, 'SchemaService');
+
+    this.container.register((c: DependencyContainer) => {
+      return new GroupService(
+        c.resolve<GroupRepository>('GroupRepository'),
+        c.resolve<SchemaRepository>('SchemaRepository'),
+      );
+    }, 'GroupService');
 
     this.container.register((c: DependencyContainer) => {
       return new EndpointService(
