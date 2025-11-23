@@ -52,6 +52,28 @@ export class GroupService {
     }
   }
 
+  async addSchemaToGroup(schemaId: number, groupId: number): Promise<Result> {
+    // validate group
+    const group = await this.groupRepo.getById(groupId);
+    if (!group) return Result.notFound(`Group with id ${groupId} not found`);
+
+    // validate schema exists
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) return Result.notFound(`Schema with id ${schemaId} not found`);
+
+    await this.schemaRepo.assignToGroup(schemaId, groupId);
+    return Result.success();
+  }
+
+  async removeSchemaFromGroup(schemaId: number): Promise<Result> {
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) return Result.notFound(`Schema with id ${schemaId} not found`);
+
+    // move the schema to default group (id 0)
+    await this.schemaRepo.assignToGroup(schemaId, 0);
+    return Result.success();
+  }
+
   async listGroups(page = 1, size = 10) {
     const skip = (page - 1) * size;
     return await this.groupRepo.list(skip, size);

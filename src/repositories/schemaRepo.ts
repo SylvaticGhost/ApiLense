@@ -65,6 +65,13 @@ export class SchemaRepository {
     });
   }
 
+  async assignToGroup(schemaId: number, groupId: number) {
+    return await this.prismaClient.schema.update({
+      where: { id: schemaId },
+      data: { groupId },
+    });
+  }
+
   async transferBetweenGroups(fromGroupId: number, toGroupId: number) {
     return await this.prismaClient.schema.updateMany({
       where: { groupId: fromGroupId },

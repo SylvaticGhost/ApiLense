@@ -91,6 +91,44 @@ export class GroupCommandDispatcher implements IDispatcher {
         }
       })
 
+      .command('group-add-schema', 'Assign a schema to a group')
+      .alias('gas')
+      .option('-s, --schema <schema:number>', 'Schema id')
+      .option('-g, --group <group:number>', 'Group id')
+      .action(async (options: any) => {
+        // Validate inputs
+        const schemaId = Number(options.schema);
+        const groupId = Number(options.group);
+
+        const sCheck = new NumberValidator(schemaId, 'schema').isPositive().getResult();
+        if (sCheck) { console.error(sCheck.errorMessage); return; }
+        const gCheck = new NumberValidator(groupId, 'group').isNonNegative().getResult();
+        if (gCheck) { console.error(gCheck.errorMessage); return; }
+
+        const result = await groupService.addSchemaToGroup(schemaId, groupId);
+        if (result.isFailure()) {
+          console.error(result.errorMessage);
+        } else {
+          console.log(`Schema ${schemaId} assigned to group ${groupId}`);
+        }
+      })
+
+      .command('group-remove-schema', 'Remove schema from its group (moves to default)')
+      .alias('grs')
+      .option('-s, --schema <schema:number>', 'Schema id')
+      .action(async (options: any) => {
+        const schemaId = Number(options.schema);
+        const sCheck = new NumberValidator(schemaId, 'schema').isPositive().getResult();
+        if (sCheck) { console.error(sCheck.errorMessage); return; }
+
+        const result = await groupService.removeSchemaFromGroup(schemaId);
+        if (result.isFailure()) {
+          console.error(result.errorMessage);
+        } else {
+          console.log(`Schema ${schemaId} moved to default group`);
+        }
+      })
+
       .command('group-list', 'List all groups')
       .alias('gl')
       .option('-i, --interactive-mode', 'Enable interactive mode', { default: true })

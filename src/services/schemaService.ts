@@ -98,7 +98,8 @@ export class SchemaService {
       return validationResult;
     }
 
-    const content: string = await retrievalFunc(input);
+    const contentRaw: any = await retrievalFunc(input);
+    const content: string = typeof contentRaw === 'string' ? contentRaw : JSON.stringify(contentRaw);
 
     const groupCheckResult = await this.CheckGroupExists(args.group);
     if (groupCheckResult.isFailure()) {
