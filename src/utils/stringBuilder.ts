@@ -1,3 +1,8 @@
+import {
+  ColorName,
+  ColorProvider,
+} from '../infrastructure/providers/colorProvider.ts';
+
 export class StringBuilder {
   private str: string = '';
 
@@ -31,5 +36,11 @@ export class StringBuilder {
 
   toString(): string {
     return this.str;
+  }
+
+  appendColor(text: string, color: ColorName): StringBuilder {
+    const colorCode = ColorProvider.getColorCode(color);
+    this.str += `${colorCode}${text}${ColorProvider.RESET_CODE}`;
+    return this;
   }
 }

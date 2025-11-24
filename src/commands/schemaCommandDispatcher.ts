@@ -6,13 +6,24 @@ import { SchemaService } from '../services/schemaService.ts';
 import { SchemaCommandPrinters } from '../utils/printers/schemaCommandPrinters.ts';
 import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import {
+  SchemaEndpointsListArgs,
   SchemaRemoveArgs,
-  SchemaListArgs,
 } from '../contracts/schemaCommandsArgs.ts';
-import { Result } from '../utils/result.ts';
+import { EndpointMetaData } from '../core/endpoint.ts';
+import { StringBuilder } from '../utils/stringBuilder.ts';
+import { PagedList } from '../utils/types/pagedList.ts';
+import { ColorProvider } from '../infrastructure/providers/colorProvider.ts';
+import { HTTP_METHODS } from '../core/enums.ts';
 
 interface SchemaRemovePureArgs {
-  id?: number | undefined;
+  schemaId?: number | undefined;
+}
+
+interface SchemaEndpointsListPureArgs {
+  schemaId?: number | undefined;
+  method?: string | undefined;
+  page?: number | undefined;
+  size?: number | undefined;
 }
 
 export class SchemaCommandDispatcher {
@@ -187,10 +198,94 @@ export class SchemaCommandDispatcher {
           }
         }
       })
+      //schema-endpoints-list
+      .command('schema-endpoints-list', 'List endpoints of a specified schema')
+      .alias('sel')
+      .option('-s, --schema-id <id:number>', 'ID of the schema')
+      .option('--page <page:number>', 'Page number', { default: 1 })
+      .option('--size <size:number>', 'Page size', { default: 10 })
+      .option(
+        '-m, --method <method:string>',
+        'Filter by HTTP method (GET, POST, etc.)',
+      )
+      .action((options) => {
+        return CommandLogic.define<
+          SchemaEndpointsListPureArgs,
+          SchemaEndpointsListArgs,
+          void
+        >()
+          .withValidation((argValidator) =>
+            argValidator
+              .for(
+                (a) => a.schemaId,
+                (v) =>
+                  v
+                    .defineName('schema id')
+                    .notNull()
+                    .asNumber((nv) => nv.isNatural()),
+              )
+              .for(
+                (a) => a.page,
+                (v) =>
+                  v
+                    .defineName('page')
+                    .optional()
+                    .asNumber((nv) => nv.isNatural().min(1).max(99)),
+              )
+              .for(
+                (a) => a.size,
+                (v) =>
+                  v
+                    .defineName('size')
+                    .optional()
+                    .asNumber((nv) => nv.isNatural().min(1).max(99)),
+              )
+              .for(
+                (a) => a.method,
+                (v) =>
+                  v
+                    .defineName('method')
+                    .optional()
+                    .asString((sv) => sv.convertableToEnum(HTTP_METHODS)),
+              )
+              .map((args) => {
+                return {
+                  schemaId: args.schemaId!,
+                  page: args.page ?? 1,
+                  size: args.size ?? 10,
+                  method: args.method
+                    ? (args.method.toUpperCase() as keyof typeof HTTP_METHODS)
+                    : undefined,
+                } as SchemaEndpointsListArgs;
+              }),
+          )
+          .withLogic(async (args) => {
+            return await this.schemaService.listSchemaEndpoints(args);
+          })
+          .withResultDisplay((result) => {
+            const pagedList =
+              result.castValueStrict<PagedList<EndpointMetaData>>();
+            const sb = new StringBuilder();
+            sb.appendLine(
+              `Endpoints for schema ${pagedList.items[0].schemaId} (Page ${pagedList.page} of ${Math.ceil(pagedList.totalCount / pagedList.size)}):`,
+            );
+            for (const endpoint of pagedList.items) {
+              sb.append('- [');
+              sb.appendColor(
+                endpoint.method,
+                ColorProvider.getHttpMethodColor(endpoint.method),
+              );
+              sb.append(`] ${endpoint.path} (Name: ${endpoint.name})\n`);
+            }
+            console.info(sb.toString());
+          })
+          .execute(options);
+      })
+
       // schema-remove
       .command('schema-remove', 'Remove specified schema by ID or name')
       .alias('sr')
-      .option('-i, --id <id:number>', 'ID of the schema to remove')
+      .option('-s, --schema-id <id:number>', 'ID of the schema to remove')
       .action(async (options) => {
         await CommandLogic.define<
           SchemaRemovePureArgs,
@@ -200,7 +295,7 @@ export class SchemaCommandDispatcher {
           .withValidation((argValidator) =>
             argValidator
               .for(
-                (a) => a.id,
+                (a) => a.schemaId,
                 (v) =>
                   v
                     .defineName('schema id')
@@ -208,14 +303,14 @@ export class SchemaCommandDispatcher {
                     .asNumber((nv) => nv.isNatural()),
               )
               .map((args) => {
-                return { id: args.id! } as SchemaRemoveArgs;
+                return { id: args.schemaId! } as SchemaRemoveArgs;
               }),
           )
           .withLogic(async (args) => {
             const result = await this.schemaService.removeSchema(args);
             return result;
           })
-          .withResultDisplay((result) => {
+          .withResultDisplay(() => {
             console.info(`Schema removed successfully`);
           })
           .execute(options);

@@ -1,5 +1,6 @@
 import { Result } from '../utils/result.ts';
-import { NumberValidator } from './numberValidator.ts';
+import { NumberValidator } from './fieldValidators/numberValidator.ts';
+import { StringValidator } from './fieldValidators/stringValidator.ts';
 
 export class ArgValidator<TArg> {
   constructor(private readonly arg: TArg) {}
@@ -104,8 +105,31 @@ class FieldValidator<TField>
       | 'symbol'
       | 'function',
   ): FieldValidator<TField> {
+    const condition = (field: TField) => {
+      switch (typeName) {
+        case 'undefined':
+          return typeof field === 'undefined';
+        case 'object':
+          return typeof field === 'object';
+        case 'boolean':
+          return typeof field === 'boolean';
+        case 'number':
+          return typeof field === 'number';
+        case 'string':
+          return typeof field === 'string';
+        case 'bigint':
+          return typeof field === 'bigint';
+        case 'symbol':
+          return typeof field === 'symbol';
+        case 'function':
+          return typeof field === 'function';
+        default:
+          return false;
+      }
+    };
+
     return this.should(
-      (field) => typeof field === typeName,
+      condition,
       `Field ${this.fieldName} must be of type ${typeName}`,
     );
   }
@@ -117,6 +141,15 @@ class FieldValidator<TField>
     numValidatorConf(numberValidator);
     const numberValidationResult = numberValidator.getResult();
     this.result ??= numberValidationResult;
+  }
+
+  asString(stringValidatorConf: (strValidator: StringValidator) => void): void {
+    if (this.result || this.skip) return;
+
+    const stringValidator = new StringValidator(this.field, this.fieldName);
+    stringValidatorConf(stringValidator);
+    const stringValidationResult = stringValidator.getResult();
+    this.result ??= stringValidationResult;
   }
 
   notNull(): FieldValidator<TField> {
@@ -163,6 +196,8 @@ interface IFieldValidatorConstraintStep<TField> {
   notNull(): IFieldValidatorConstraintWithFinalizeStep<TField>;
 
   asNumber(numValidatorConf: (numValidator: NumberValidator) => void): void;
+
+  asString(stringValidatorConf: (strValidator: StringValidator) => void): void;
 }
 
 interface IFieldValidatorConstraintWithFinalizeStep<TField>

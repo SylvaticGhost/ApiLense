@@ -1,4 +1,3 @@
-import { HttpMethod } from '../core/enums.ts';
 import { TemplateFilling } from '../core/templateFilling.ts';
 import { FileSystemBasedRepository } from './Bases/fileSystemBasedRepository.ts';
 
