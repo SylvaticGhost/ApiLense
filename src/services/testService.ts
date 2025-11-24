@@ -7,7 +7,7 @@ import { TemplateFilling } from '../core/templateFilling.ts';
 import { TestReport } from '../core/testReport.ts';
 import { RequestRunner } from '../infrastructure/requestRunner.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
-import { FileUrl } from '../utils/fileUrl.ts';
+import { FileUrl } from '../utils/types/fileUrl.ts';
 import { Result } from '../utils/result.ts';
 import { EndpointService } from './endpointService.ts';
 import { TemplateFillingService } from './templateFillingService.ts';

@@ -121,7 +121,6 @@ export function openApiToSimpleSchema(openApi: any) {
     for (const [method, def] of Object.entries(
       methods as Record<string, any>,
     )) {
-      console.info(`Processing endpoint:`, def);
       const params =
         def.parameters?.map((p: any) => ({
           name: p.name,

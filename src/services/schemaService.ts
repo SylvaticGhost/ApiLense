@@ -1,5 +1,6 @@
 import {
   LoadSchemaArgs,
+  SchemaEndpointsListArgs,
   SchemaListArgs,
   SchemaRemoveArgs,
 } from '../contracts/schemaCommandsArgs.ts';
@@ -67,6 +68,31 @@ export class SchemaService {
     const schemas = await this.schemaRepo.list(skip, args.size, args.group);
 
     return Result.success(schemas);
+  }
+
+  async listSchemaEndpoints(args: SchemaEndpointsListArgs): Promise<Result> {
+    return await this.withSchema(args.schemaId, (schema) =>
+      this.endpointMetaDataRepository.listBySchemaId(
+        schema.id,
+        args.size,
+        (args.page - 1) * args.size,
+        args.method,
+      ),
+    );
+  }
+
+  private async withSchema<T>(
+    schemaId: number,
+    func: (schema: ApiSchema) => Promise<T | Result>,
+  ): Promise<Result> {
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) return Result.notFound(`Schema with id ${schemaId} not found`);
+
+    const result = await func(schema);
+    if (result instanceof Result) {
+      return result;
+    }
+    return Result.success(result);
   }
 
   /**

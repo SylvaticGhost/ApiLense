@@ -1,3 +1,6 @@
+import { HttpMethod } from '../core/enums.ts';
+import { PagedListArgs } from './commonArgs.ts';
+
 export interface LoadSchemaArgs {
   url?: string;
   file?: string;
@@ -9,9 +12,12 @@ export interface SchemaRemoveArgs {
   id: number;
 }
 
-export interface SchemaListArgs {
+export interface SchemaListArgs extends PagedListArgs {
   group?: string;
-  page: number;
-  size: number;
   detailed?: boolean;
+}
+
+export interface SchemaEndpointsListArgs extends PagedListArgs {
+  schemaId: number;
+  method?: HttpMethod;
 }

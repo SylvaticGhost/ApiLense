@@ -7,7 +7,7 @@ import { TemplateFilling } from '../core/templateFilling.ts';
 import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import { Guard } from '../utils/guard.ts';
 import { StringBuilder } from '../utils/stringBuilder.ts';
-import { FileUrl } from '../utils/fileUrl.ts';
+import { FileUrl } from '../utils/types/fileUrl.ts';
 import { colors } from '@cliffy/ansi/colors';
 import { tty } from '@cliffy/ansi/tty';
 
