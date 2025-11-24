@@ -310,7 +310,7 @@ export class SchemaCommandDispatcher {
             const result = await this.schemaService.removeSchema(args);
             return result;
           })
-          .withResultDisplay((result) => {
+          .withResultDisplay(() => {
             console.info(`Schema removed successfully`);
           })
           .execute(options);

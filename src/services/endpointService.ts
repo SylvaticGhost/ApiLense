@@ -40,18 +40,4 @@ export class EndpointService {
 
     return Result.success(endpoint);
   }
-
-  async listEndpointsBySchemaId(
-    schemaId: number,
-    page: number,
-    size: number,
-  ): Promise<Result> {
-    const skip = (page - 1) * size;
-    const endpoints = await this.endpointMetaDataRepository.listBySchemaId(
-      schemaId,
-      size,
-      skip,
-    );
-    return Result.success(endpoints);
-  }
 }

@@ -89,6 +89,7 @@ function schemaToPlainBody(
   return bodyType;
 }
 
+// deno-lint-ignore no-unused-vars
 function extractBodyFields(
   schema: any,
   schemasMap: Record<string, any>,
@@ -185,6 +186,7 @@ export function openApiToSimpleSchema(openApi: any) {
   return { endpoints };
 }
 
+// deno-lint-ignore require-await
 export async function parseApiSchemaFromText(
   jsonText: string,
 ): Promise<Endpoint[]> {

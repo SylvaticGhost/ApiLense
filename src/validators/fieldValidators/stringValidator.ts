@@ -56,7 +56,7 @@ export class StringValidator extends BaseValidator<string, StringValidator> {
     return this.check((val) => {
       const upperStr = val.toUpperCase();
       const enumValues = Object.values(enumObject).map((v) =>
-        v.toString().toUpperCase(),
+        String(v).toUpperCase(),
       );
       if (!enumValues.includes(upperStr)) {
         return Result.failure(

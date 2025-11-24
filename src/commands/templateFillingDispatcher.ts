@@ -9,7 +9,6 @@ import { Guard } from '../utils/guard.ts';
 import { StringBuilder } from '../utils/stringBuilder.ts';
 import { FileUrl } from '../utils/types/fileUrl.ts';
 import { colors } from '@cliffy/ansi/colors';
-import { tty } from '@cliffy/ansi/tty';
 
 interface TemplateFillingNewPureArgs {
   schema?: string | undefined;

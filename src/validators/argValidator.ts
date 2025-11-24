@@ -105,8 +105,31 @@ class FieldValidator<TField>
       | 'symbol'
       | 'function',
   ): FieldValidator<TField> {
+    const condition = (field: TField) => {
+      switch (typeName) {
+        case 'undefined':
+          return typeof field === 'undefined';
+        case 'object':
+          return typeof field === 'object';
+        case 'boolean':
+          return typeof field === 'boolean';
+        case 'number':
+          return typeof field === 'number';
+        case 'string':
+          return typeof field === 'string';
+        case 'bigint':
+          return typeof field === 'bigint';
+        case 'symbol':
+          return typeof field === 'symbol';
+        case 'function':
+          return typeof field === 'function';
+        default:
+          return false;
+      }
+    };
+
     return this.should(
-      (field) => typeof field === typeName,
+      condition,
       `Field ${this.fieldName} must be of type ${typeName}`,
     );
   }
