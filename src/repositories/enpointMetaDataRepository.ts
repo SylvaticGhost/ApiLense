@@ -68,7 +68,12 @@ export class EndpointMetaDataRepository {
     });
 
     const items = values.map(
-      (value) =>
+      (value: {
+        schemaId: number;
+        name: string;
+        method: string;
+        path: string;
+      }) =>
         new EndpointMetaData(
           value.schemaId,
           value.name,
