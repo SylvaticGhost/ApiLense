@@ -7,6 +7,7 @@ import { Select } from '@cliffy/prompt';
 import { Table } from '@cliffy/table';
 import { StringValidators } from '../validators/stringValidators.ts';
 import { NumberValidator } from '../validators/fieldValidators/numberValidator.ts';
+import NamedColorProvider from '../infrastructure/providers/namedColorProvider.ts';
 
 export class GroupCommandDispatcher implements IDispatcher {
   constructor(
@@ -36,10 +37,25 @@ export class GroupCommandDispatcher implements IDispatcher {
           return;
         }
 
-        const result = await groupService.createGroup(
-          options.name,
-          options.color,
-        );
+        // color handling: accept hex or named color
+        let colorHex: string | undefined;
+        if (options.color) {
+          const raw = String(options.color).trim();
+          const normalizedHex = NamedColorProvider.normalizeHex(raw);
+          if (normalizedHex) colorHex = normalizedHex;
+          else {
+            const hexForName = NamedColorProvider.getHexForColor(raw);
+            if (!hexForName) {
+              console.error(
+                'Color must be either a known color name or valid hex (e.g. #ff00ff)',
+              );
+              return;
+            }
+            colorHex = hexForName;
+          }
+        }
+
+        const result = await groupService.createGroup(options.name, colorHex);
         if (result.isFailure()) {
           console.error(result.errorMessage);
         } else {
@@ -60,11 +76,23 @@ export class GroupCommandDispatcher implements IDispatcher {
           return;
         }
 
-        const result = await groupService.updateGroup(
-          id,
-          options.name,
-          options.color,
-        );
+        let colorHex: string | undefined;
+        if (options.color) {
+          const raw = String(options.color).trim();
+          const normalizedHex = NamedColorProvider.normalizeHex(raw);
+          if (normalizedHex) colorHex = normalizedHex;
+          else {
+            const hexForName = NamedColorProvider.getHexForColor(raw);
+            if (!hexForName) {
+              console.error(
+                'Color must be either a known color name or valid hex (e.g. #ff00ff)',
+              );
+              return;
+            }
+            colorHex = hexForName;
+          }
+        }
+        const result = await groupService.updateGroup(id, options.name, colorHex);
         if (result.isFailure()) {
           console.error(result.errorMessage);
         } else {
@@ -200,7 +228,16 @@ export class GroupCommandDispatcher implements IDispatcher {
             const header = ['ID', 'Name', 'Color'];
             const table = new Table().header(header);
             groups.forEach((g: any) => {
-              table.push([g.id.toString(), g.name, g.color || '-']);
+              const colorVal = g.color || '';
+              let coloredLabel = '-';
+              if (colorVal) {
+                const normalized = NamedColorProvider.normalizeHex(colorVal) || colorVal.replace('#', '').toUpperCase();
+                const name = NamedColorProvider.findNameForHex(normalized);
+                const label = name ? (name.charAt(0).toUpperCase() + name.slice(1)) : '#' + normalized;
+                // Colorize text itself (foreground color)
+                coloredLabel = NamedColorProvider.colorizeTextByHex(normalized, label);
+              }
+              table.push([g.id.toString(), g.name, coloredLabel]);
             });
 
             console.log(
@@ -288,9 +325,17 @@ export class GroupCommandDispatcher implements IDispatcher {
           }
           const header = ['ID', 'Name', 'Color'];
           const table = new Table().header(header);
-          groups.forEach((g: any) =>
-            table.push([g.id.toString(), g.name, g.color || '-']),
-          );
+          groups.forEach((g: any) => {
+            const colorVal = g.color || '';
+            let coloredLabel = '-';
+            if (colorVal) {
+              const normalized = NamedColorProvider.normalizeHex(colorVal) || colorVal.replace('#', '').toUpperCase();
+              const name = NamedColorProvider.findNameForHex(normalized);
+              const label = name ? (name.charAt(0).toUpperCase() + name.slice(1)) : '#' + normalized;
+              coloredLabel = NamedColorProvider.colorizeTextByHex(normalized, label);
+            }
+            table.push([g.id.toString(), g.name, coloredLabel]);
+          });
           table.render();
         }
       });
