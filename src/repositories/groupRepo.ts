@@ -41,4 +41,38 @@ export class GroupRepository {
       raw.Schemas,
     );
   }
+
+  async create(name: string, color?: string) {
+    return await this.prismaClient.group.create({
+      data: { name, color: color ?? '' },
+    });
+  }
+
+  async getById(id: number): Promise<Group | null> {
+    const raw = await this.prismaClient.group.findUnique({
+      where: { id },
+      include: { Schemas: true },
+    });
+    return this.mapToDomain(raw);
+  }
+
+  async update(id: number, data: { name?: string; color?: string }) {
+    return await this.prismaClient.group.update({
+      where: { id },
+      data: data,
+    });
+  }
+
+  async deleteById(id: number) {
+    return await this.prismaClient.group.delete({ where: { id } });
+  }
+
+  async list(skip: number, take: number) {
+    return await this.prismaClient.group.findMany({
+      skip,
+      take,
+      orderBy: { id: 'asc' },
+    });
+  }
+
 }

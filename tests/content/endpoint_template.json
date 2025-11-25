@@ -1,0 +1,170 @@
+{
+   "params":[
+
+   ],
+   "bodyFields":[
+      {
+         "name":"title",
+         "typing":"string",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"locationSearchParam",
+         "typing":"object",
+         "valueKind":"object",
+         "nestedFields":[
+            {
+               "name":"startPoint",
+               "typing":"object",
+               "valueKind":"object",
+               "nestedFields":[
+                  {
+                     "name":"city",
+                     "typing":"string",
+                     "valueKind":"object",
+                     "nestedFields":[
+
+                     ]
+                  },
+                  {
+                     "name":"cord",
+                     "typing":"object",
+                     "valueKind":"object",
+                     "nestedFields":[
+                        {
+                           "name":"latitude",
+                           "typing":"float",
+                           "valueKind":"object",
+                           "nestedFields":[
+
+                           ]
+                        },
+                        {
+                           "name":"longitude",
+                           "typing":"float",
+                           "valueKind":"object",
+                           "nestedFields":[
+
+                           ]
+                        }
+                     ]
+                  }
+               ]
+            },
+            {
+               "name":"radius",
+               "typing":"float",
+               "valueKind":"object",
+               "nestedFields":[
+
+               ]
+            }
+         ]
+      },
+      {
+         "name":"timeRange",
+         "typing":"object",
+         "valueKind":"object",
+         "nestedFields":[
+            {
+               "name":"start",
+               "typing":"datetime",
+               "valueKind":"object",
+               "nestedFields":[
+
+               ]
+            },
+            {
+               "name":"end",
+               "typing":"datetime",
+               "valueKind":"object",
+               "nestedFields":[
+
+               ]
+            }
+         ]
+      },
+      {
+         "name":"tag",
+         "typing":"int",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"participantsRange",
+         "typing":"object",
+         "valueKind":"object",
+         "nestedFields":[
+            {
+               "name":"min",
+               "typing":"int",
+               "valueKind":"object",
+               "nestedFields":[
+
+               ]
+            },
+            {
+               "name":"max",
+               "typing":"int",
+               "valueKind":"object",
+               "nestedFields":[
+
+               ]
+            }
+         ]
+      },
+      {
+         "name":"creatorUsername",
+         "typing":"string",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"orderProp",
+         "typing":"int",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"orderDirection",
+         "typing":"int",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"page",
+         "typing":"int",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"pageSize",
+         "typing":"int",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      },
+      {
+         "name":"showDeleted",
+         "typing":"string",
+         "valueKind":"object",
+         "nestedFields":[
+
+         ]
+      }
+   ]
+}

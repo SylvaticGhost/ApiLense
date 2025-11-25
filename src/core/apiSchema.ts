@@ -34,11 +34,39 @@ export class ApiSchema {
     this.group = group;
   }
 
-  static createByUrl(id: number, name: string, groupId: number | undefined, url: string) {
+  static createByUrl(
+    id: number,
+    name: string,
+    groupId: number | undefined,
+    url: string,
+  ) {
     return new ApiSchema(id, name, new Date(), new Date(), groupId, url);
   }
 
-  static createByFile(id: number, name: string, groupId: number | undefined, filePath: string) {
-    return new ApiSchema(id, name, new Date(), new Date(), groupId, undefined, filePath);
+  static createByFile(
+    id: number,
+    name: string,
+    groupId: number | undefined,
+    filePath: string,
+  ) {
+    return new ApiSchema(
+      id,
+      name,
+      new Date(),
+      new Date(),
+      groupId,
+      undefined,
+      filePath,
+    );
+  }
+
+  baseUrl(): string | null {
+    if (!this.url) return null;
+    try {
+      const urlObj = new URL(this.url);
+      return `${urlObj.protocol}//${urlObj.host}`;
+    } catch {
+      return null;
+    }
   }
 }

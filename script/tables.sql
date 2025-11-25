@@ -14,13 +14,18 @@ CREATE TABLE IF NOT EXISTS api_schemas (
   last_used_at TIMESTAMP,
   FOREIGN KEY (group_id) REFERENCES groups (id)
 );
-
-INSERT INTO groups (id, name, color) VALUES (0, 'Default', '#FFFFFF');
-
+CREATE TABLE IF NOT EXISTS endpoints (
+  schema_id INTEGER,
+  name TEXT NOT NULL,
+  method TEXT NOT NULL,
+  path TEXT NOT NULL,
+  PRIMARY KEY (schema_id, name, method, path),
+  FOREIGN KEY (schema_id) REFERENCES api_schemas (id)
+);
+INSERT INTO groups (id, name, color)
+VALUES (0, 'Default', '#FFFFFF');
 CREATE TABLE IF NOT EXISTS schema_last_using (
   schema_id INTEGER,
   last_used_at DATETIME,
   FOREIGN KEY (schema_id) REFERENCES api_schemas (id)
 );
-
-
