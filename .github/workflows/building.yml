@@ -5,10 +5,9 @@ on:
     branches: ['release-v*.*.*']
     tags: ['v*.*.*']
 
-environment: Deployment
-
 jobs:
   build:
+    environment: Deployment
     runs-on: ubuntu-latest
 
     permissions:
@@ -36,6 +35,9 @@ jobs:
         with:
           deno-version: v2.4.4
 
+      - name: Run prisma generate
+        run: deno task prisma-generate
+
       - name: build windows
         run: deno task compile
 
@@ -47,24 +49,22 @@ jobs:
 
       - name: Package Windows binary and script
         run: |
-          zip -j builds/volume-windows.zip builds/volume-windows.exe script/setup-workspace.ps1
+          zip -j build/apilense-windows.zip build/api-lense.exe script/setup-workspace.ps1
 
       - name: Package mac-intel binary and script
         run: |
-          zip -j builds/volume-mac-intel.zip builds/volume-mac-intel script/setup-workspace.sh
-
+          zip -j build/apilense-mac-intel.zip build/api-lense-mac-intel script/setup-workspace.sh
       - name: Package mac-arm binary and script
         run: |
-          zip -j builds/volume-mac-arm.zip builds/volume-mac-arm script/setup-workspace.sh
-
+          zip -j build/apilense-mac-arm.zip build/api-lense-mac-arm script/setup-workspace.sh
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v1
         with:
           tag_name: 'v${{ steps.extract_version.outputs.version }}'
           files: |
-            ./builds/volume-windows.zip
-            ./builds/volume-mac-intel.zip
-            ./builds/volume-mac-arm.zip
+            ./build/apilense-windows.zip
+            ./build/apilense-mac-intel.zip
+            ./build/apilense-mac-arm.zip
         env:
           GITHUB_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
 
