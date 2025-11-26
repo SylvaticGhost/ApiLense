@@ -1,0 +1,1138 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "FunDay-Backend (Test Schema)",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/work": {
+      "get": {
+        "tags": ["App"],
+        "summary": "Health check endpoint",
+        "description": "For internal usage to check if the server is running",
+        "operationId": "work",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/application/{offerId}/apply": {
+      "post": {
+        "tags": ["Application"],
+        "summary": "Create application request on the offer",
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "path",
+            "description": "applicable offer's id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Application created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Offer not found"
+          },
+          "409": {
+            "description": "Application already exists(can be rejected or accepted)"
+          }
+        }
+      }
+    },
+    "/api/application/{offerId}/cancel": {
+      "patch": {
+        "tags": ["Application"],
+        "summary": "Cancel sent earlier application on the offer",
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "path",
+            "description": "offer's id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "User has no application on this offer"
+          }
+        }
+      }
+    },
+    "/api/application/{offerId}/accept": {
+      "put": {
+        "tags": ["Application"],
+        "summary": "Accept application from user on your offer",
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "path",
+            "description": "offer's id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "applicantUsername",
+            "in": "query",
+            "description": "username of user with application",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application accepted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "You can't accept this application"
+          }
+        }
+      }
+    },
+    "/api/user/avatar/upload": {
+      "post": {
+        "tags": ["Avatar"],
+        "summary": "Upload avatar for authorized user by JWT",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ContentType": {
+                    "type": "string"
+                  },
+                  "ContentDisposition": {
+                    "type": "string"
+                  },
+                  "Headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "Length": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "Name": {
+                    "type": "string"
+                  },
+                  "FileName": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Avatar uploaded successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/avatar/delete": {
+      "delete": {
+        "tags": ["Avatar"],
+        "summary": "Delete avatar for authorized user by JWT",
+        "responses": {
+          "204": {
+            "description": "Avatar deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "User didn't have an avatar"
+          }
+        }
+      }
+    },
+    "/api/offer/{offerId}": {
+      "get": {
+        "tags": ["Offer"],
+        "summary": "Returns the offer with the given id",
+        "description": "If offer has been completed response will be 404. To get one use specified for endpoint",
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Offer found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/App.Core.Offers.Entities.Offer"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Offer not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Offer"],
+        "summary": "Delete offer with the given id",
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "path",
+            "description": "offer's id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Offer deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Offer not found"
+          },
+          "403": {
+            "description": "You are not the creator of this offer"
+          }
+        }
+      }
+    },
+    "/api/offer/create": {
+      "post": {
+        "tags": ["Offer"],
+        "summary": "Create offer with optional passed image",
+        "requestBody": {
+          "description": "offer info",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/App.Core.Offers.DTOs.OfferCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Offer created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/api/offer/update": {
+      "patch": {
+        "tags": ["Offer"],
+        "summary": "Update existing offer",
+        "description": "most of the parameters is optional",
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "query",
+            "description": "id of offer",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "updated fields for offer",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/App.Core.Offers.DTOs.OfferUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Offer updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/App.Core.Offers.Entities.Offer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Offer not found"
+          }
+        }
+      }
+    },
+    "/api/offer/save-list/categories": {
+      "put": {
+        "tags": ["OfferSaveList"],
+        "summary": "Get offers grouped by interesting status",
+        "requestBody": {
+          "description": "Param with types of interesting. Pass null for get all",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FunDay_Backend.Api.OfferSaveListController+GetByCategoryParam"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/App.Core.Offers.Entities.InterestedOffersCategory"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/profile/{username}": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get user profile. If username is not provided, it will return profile of authenticated user\r\nIf username is provided, it will return profile of that user",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "username of profile owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile of user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/App.Core.Users.DTOs.ProfileDetailsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Profile not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "App.Core.Application.ApplicationPolicy": {
+        "type": "object",
+        "properties": {
+          "offerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "autoApprove": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Application.ApplicationPolicyCreateDto": {
+        "type": "object",
+        "properties": {
+          "autoApprove": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.General.Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "colors": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Levels.Entities.UserCurrentXp+Dto": {
+        "type": "object",
+        "properties": {
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "xpValue": {
+            "type": "integer",
+            "format": "int64",
+            "readOnly": true
+          },
+          "currentLevel": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Locations.Location": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number",
+            "format": "double"
+          },
+          "creatorUsername": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "region": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "mapUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "comment": {
+            "maxLength": 400,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Locations.LocationDto": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number",
+            "format": "double"
+          },
+          "country": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "region": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "mapUrl": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "comment": {
+            "maxLength": 400,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Offers.DTOs.OfferCreateDto": {
+        "required": ["activityDate", "isOffline", "title"],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 30,
+            "minLength": 3,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "activityDate": {
+            "minLength": 1,
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration": {
+            "$ref": "#/components/schemas/System.TimeSpan"
+          },
+          "registrationDeadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "maxParticipants": {
+            "minimum": 2,
+            "type": "integer",
+            "format": "int32"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "location": {
+            "$ref": "#/components/schemas/App.Core.Locations.LocationDto"
+          },
+          "tagId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isOffline": {
+            "type": "boolean"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shared.Entities.Link"
+            },
+            "nullable": true
+          },
+          "isIndoor": {
+            "type": "boolean"
+          },
+          "applicationPolicy": {
+            "$ref": "#/components/schemas/App.Core.Application.ApplicationPolicyCreateDto"
+          },
+          "minimalAge": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maximalAge": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Offers.DTOs.OfferUpdateInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 30,
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "activityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "duration": {
+            "$ref": "#/components/schemas/System.TimeSpan"
+          },
+          "registrationDeadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "maxParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isOffline": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shared.Entities.Link"
+            },
+            "nullable": true
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "locationDto": {
+            "$ref": "#/components/schemas/App.Core.Locations.LocationDto"
+          },
+          "tagId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "applicationPolicy": {
+            "$ref": "#/components/schemas/App.Core.Application.ApplicationPolicyCreateDto"
+          },
+          "minimalAge": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maximalAge": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Offers.Entities.InterestedOffersCategory": {
+        "type": "object",
+        "properties": {
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/App.Core.Offers.Entities.Offer"
+            },
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/App.Core.Offers.Enums.InterestedType"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Offers.Entities.Offer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "title": {
+            "maxLength": 50,
+            "minLength": 3,
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "creatorUsername": {
+            "maxLength": 30,
+            "type": "string",
+            "nullable": true
+          },
+          "activityDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "duration": {
+            "$ref": "#/components/schemas/System.TimeSpan"
+          },
+          "maxParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "isOffline": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isIndoor": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "location": {
+            "$ref": "#/components/schemas/App.Core.Locations.Location"
+          },
+          "tag": {
+            "$ref": "#/components/schemas/App.Core.General.Tag"
+          },
+          "tagId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "links": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shared.Entities.Link"
+            },
+            "nullable": true,
+            "readOnly": true
+          },
+          "minimalAge": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "maximalAge": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "creator": {
+            "$ref": "#/components/schemas/App.Core.Users.UserPreview"
+          },
+          "modificationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "imageUrl": {
+            "maxLength": 100,
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "registrationDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "applied": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "participants": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "outdatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "isOutdated": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "applicationPolicy": {
+            "$ref": "#/components/schemas/App.Core.Application.ApplicationPolicy"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Offers.Enums.InterestedType": {
+        "enum": [0, 1, 2, 3, 4],
+        "type": "integer",
+        "format": "int32"
+      },
+      "App.Core.Users.DTOs.ProfileDetailsDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Shared.Entities.Genders"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "telegram": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "relationToRequester": {
+            "type": "string",
+            "nullable": true
+          },
+          "friendsCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "eventCreatorRating": {
+            "$ref": "#/components/schemas/App.Core.Users.EventCreatorRatingDto"
+          },
+          "offerCount": {
+            "$ref": "#/components/schemas/App.Core.Users.UserOfferCount+Summary"
+          },
+          "level": {
+            "$ref": "#/components/schemas/App.Core.Levels.Entities.UserCurrentXp+Dto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Users.EventCreatorRatingDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "format": "float"
+          },
+          "reviews": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Users.UserOfferCount+Summary": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "App.Core.Users.UserPreview": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FunDay_Backend.Api.OfferSaveListController+GetByCategoryParam": {
+        "type": "object",
+        "properties": {
+          "types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/App.Core.Offers.Enums.InterestedType"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Shared.Entities.Genders": {
+        "enum": [0, 1, 2, 3, 4],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Shared.Entities.Link": {
+        "required": ["url"],
+        "type": "object",
+        "properties": {
+          "url": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "^https?://",
+            "type": "string",
+            "format": "uri"
+          },
+          "header": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/Shared.Entities.LinkTypes"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Shared.Entities.LinkTypes": {
+        "enum": [0, 1, 2, 3, 4],
+        "type": "integer",
+        "format": "int32"
+      },
+      "System.TimeSpan": {
+        "type": "string",
+        "properties": {
+          "ticks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hours": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "milliseconds": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "microseconds": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "nanoseconds": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "totalDays": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "totalHours": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "totalMilliseconds": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "totalMicroseconds": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "totalNanoseconds": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "totalMinutes": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "totalSeconds": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "format": "duration",
+        "example": "DD:HH:MM:SS"
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "apiKey",
+        "description": "JWT Authorization header using the Bearer scheme. Example: \n\"Authorization: Bearer {token}\"",
+        "in": "query"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}

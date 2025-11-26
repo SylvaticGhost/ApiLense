@@ -1,16 +1,29 @@
-import { LoadSchemaArgs } from '../contracts/schemaCommandsArgs.ts';
+import {
+  LoadSchemaArgs,
+  SchemaEndpointsListArgs,
+  SchemaListArgs,
+  SchemaRemoveArgs,
+} from '../contracts/schemaCommandsArgs.ts';
 import { Result } from '../utils/result.ts';
 import { StringValidators } from '../validators/stringValidators.ts';
 import { SchemaFileRepository } from '../repositories/schemaFileRepo.ts';
 import { GroupRepository } from '../repositories/groupRepo.ts';
 import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { ApiSchema } from '../core/apiSchema.ts';
+import { parseApiSchemaFromText } from '../mapper/schemaParser.ts';
+import { Endpoint } from '../core/endpoint.ts';
+import { EndpointRepository } from '../repositories/endpointRepository.ts';
+import { EndpointMetaDataRepository } from '../repositories/enpointMetaDataRepository.ts';
+import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 
 export class SchemaService {
   constructor(
     private readonly schemaFileRepo: SchemaFileRepository,
     private readonly groupRepo: GroupRepository,
     private readonly schemaRepo: SchemaRepository,
+    private readonly endpointRepo: EndpointRepository,
+    private readonly endpointMetaDataRepository: EndpointMetaDataRepository,
+    private readonly templateFillingRepository: TemplateFillingRepository,
   ) {}
 
   async loadSchema(args: LoadSchemaArgs): Promise<Result> {
@@ -35,19 +48,83 @@ export class SchemaService {
     }
   }
 
+  async removeSchema(args: SchemaRemoveArgs): Promise<Result> {
+    const schemaId = args.id;
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) {
+      return Result.notFound(`Schema with id ${schemaId} not found`);
+    }
+
+    await this.templateFillingRepository.deleteBySchemaId(schemaId);
+    await this.endpointMetaDataRepository.deleteBySchemaId(schemaId);
+    await this.endpointRepo.deleteBySchemaId(schemaId);
+    await this.schemaRepo.deleteById(schemaId);
+    return Result.success('Schema removed successfully');
+  }
+
+  public async listSchemas(args: SchemaListArgs): Promise<Result> {
+    const skip = (args.page - 1) * args.size;
+
+    const schemas = await this.schemaRepo.list(skip, args.size, args.group);
+
+    return Result.success(schemas);
+  }
+
+  async listSchemaEndpoints(args: SchemaEndpointsListArgs): Promise<Result> {
+    return await this.withSchema(args.schemaId, (schema) =>
+      this.endpointMetaDataRepository.listBySchemaId(
+        schema.id,
+        args.size,
+        (args.page - 1) * args.size,
+        args.method,
+      ),
+    );
+  }
+
+  private async withSchema<T>(
+    schemaId: number,
+    func: (schema: ApiSchema) => Promise<T | Result>,
+  ): Promise<Result> {
+    const schema = await this.schemaRepo.getById(schemaId);
+    if (!schema) return Result.notFound(`Schema with id ${schemaId} not found`);
+
+    const result = await func(schema);
+    if (result instanceof Result) {
+      return result;
+    }
+    return Result.success(result);
+  }
+
+  /**
+   * Loads an API schema from a specified source, validates it, retrieves its content,
+   * parses endpoints, checks group existence, ensures schema name uniqueness, writes the schema file,
+   * constructs the schema object, and saves it to the repository.
+   *
+   * @param input - The source identifier (e.g., file path, URL, etc.) for the schema.
+   * @param args - Arguments for loading the schema, including group and optional name.
+   * @param validationFunc - Function to validate the input source.
+   * @param retrievalFunc - Asynchronous function to retrieve the schema content from the source.
+   * @param fabricFunc - Factory function to create an `ApiSchema` instance.
+   * @returns A `Promise` resolving to a `Result` containing the new schema ID on success, or an error result on failure.
+   */
   private async loadSchemaFromSource(
     input: string,
     args: LoadSchemaArgs,
     validationFunc: (input: string) => Result,
     retrievalFunc: (input: string) => Promise<string>,
-    fabricFunc: (id: number, name: string, groupId: number | undefined, source: string) => ApiSchema,
+    fabricFunc: (
+      id: number,
+      name: string,
+      groupId: number | undefined,
+      source: string,
+    ) => ApiSchema,
   ): Promise<Result> {
     const validationResult = validationFunc(input);
     if (validationResult.isFailure()) {
       return validationResult;
     }
 
-    const content = await retrievalFunc(input);
+    const content: string = await retrievalFunc(input);
 
     const groupCheckResult = await this.CheckGroupExists(args.group);
     if (groupCheckResult.isFailure()) {
@@ -63,10 +140,14 @@ export class SchemaService {
     const newSchemaId = (await this.schemaRepo.lastId()) + 1;
     const schemaName = args.name ?? `Schema_${newSchemaId}`;
 
-    await this.schemaFileRepo.writeSchemaFile(schemaName, content);
-
+    const endpoints: Endpoint[] = await parseApiSchemaFromText(content);
     const schema = fabricFunc(newSchemaId, schemaName, groupId, input);
+
     await this.schemaRepo.save(schema);
+    await this.endpointRepo.saveSchemaEndpoints(newSchemaId, endpoints);
+
+    const metaDatas = endpoints.map((e) => e.toMetaData(newSchemaId));
+    await this.endpointMetaDataRepository.saveAll(metaDatas);
 
     return Result.success(newSchemaId);
   }

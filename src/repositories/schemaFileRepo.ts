@@ -1,4 +1,4 @@
-import {  } from '@std/fs';
+import {} from '@std/fs';
 import { ensureDir } from '@std/fs';
 
 export class SchemaFileRepository {
@@ -22,4 +22,6 @@ export class SchemaFileRepository {
     const content = await Deno.readTextFile(filePath);
     return JSON.parse(content);
   }
+
+  // async deleteSchemaFile(
 }
