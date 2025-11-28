@@ -56,7 +56,9 @@ export class NamedColorProvider {
     return entry ? entry[0] : undefined;
   }
 
-  static hexToRgb(hexCode: string): { r: number; g: number; b: number } | undefined {
+  static hexToRgb(
+    hexCode: string,
+  ): { r: number; g: number; b: number } | undefined {
     const normalized = NamedColorProvider.normalizeHex(hexCode);
     if (!normalized) return undefined;
     const r = parseInt(normalized.substr(0, 2), 16);
@@ -66,15 +68,18 @@ export class NamedColorProvider {
   }
 
   static ansiForegroundFromHex(hexCode: string): string {
-    const rgb = NamedColorProvider.hexToRgb(hexCode);
-    if (!rgb) return '';
-    return `\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m`;
+    return NamedColorProvider.ansiColoring(hexCode, 38);
   }
 
   static ansiBackgroundFromHex(hexCode: string): string {
+    return NamedColorProvider.ansiColoring(hexCode, 48);
+  }
+
+  private static ansiColoring(hexCode: string, code: number): string {
+    hexCode ??= this.COLORS.gray;
     const rgb = NamedColorProvider.hexToRgb(hexCode);
     if (!rgb) return '';
-    return `\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m`;
+    return `\x1b[${code};2;${rgb.r};${rgb.g};${rgb.b}m`;
   }
 
   static RESET = '\x1b[0m';

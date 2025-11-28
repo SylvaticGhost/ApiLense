@@ -61,11 +61,16 @@ export class EndpointMetaDataRepository {
       ? { schemaId: schemaId, method: method }
       : { schemaId: schemaId };
 
-    const values = await this.prismaClient.endpointMetaData.findMany({
-      where: whereClause,
-      take: take,
-      skip: skip,
-    });
+    const values =
+      take > 0 && skip >= 0
+        ? await this.prismaClient.endpointMetaData.findMany({
+            where: whereClause,
+            take: take,
+            skip: skip,
+          })
+        : await this.prismaClient.endpointMetaData.findMany({
+            where: whereClause,
+          });
 
     const items = values.map(
       (value: {

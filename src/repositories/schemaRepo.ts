@@ -1,5 +1,6 @@
 import { ApiSchema } from '../core/apiSchema.ts';
 import { PrismaClient } from '../../prisma/generated/client.ts';
+import { Group } from '../core/group.ts';
 
 export class SchemaRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
@@ -38,19 +39,9 @@ export class SchemaRepository {
     const record = await this.prismaClient.schema.findUnique({
       where: { id: id },
     });
-    if (!record) {
-      return null;
-    }
+    if (!record) return null;
 
-    return new ApiSchema(
-      record.id,
-      record.name,
-      record.createdAt,
-      record.updatedAt,
-      record.groupId || undefined,
-      record.url || undefined,
-      record.filePath || undefined,
-    );
+    return SchemaRepository.toDomainModel(record);
   }
 
   async deleteById(id: number): Promise<void> {
@@ -86,17 +77,14 @@ export class SchemaRepository {
       const num = Number(groupFilter);
       const conditions: any[] = [{ name: { contains: groupFilter } }];
 
-      // If filter is a number, it could be an ID
-      if (!isNaN(num)) {
-        conditions.push({ id: num });
-      }
+      if (!isNaN(num)) conditions.push({ id: num });
 
       where.Group = {
         OR: conditions,
       };
     }
 
-    return await this.prismaClient.schema.findMany({
+    const records = await this.prismaClient.schema.findMany({
       where,
       skip,
       take,
@@ -107,5 +95,32 @@ export class SchemaRepository {
         id: 'asc',
       },
     });
+
+    return records.map(SchemaRepository.toDomainModel);
+  }
+
+  private static toDomainModel(record: any): ApiSchema {
+    let group = record.Group;
+    if (group) {
+      group = new Group(
+        group.id,
+        group.name,
+        undefined,
+        undefined,
+        group.color,
+        [],
+      );
+    }
+
+    return new ApiSchema(
+      record.id,
+      record.name,
+      record.createdAt,
+      record.updatedAt,
+      record.groupId || undefined,
+      record.url || undefined,
+      record.filePath || undefined,
+      group,
+    );
   }
 }
