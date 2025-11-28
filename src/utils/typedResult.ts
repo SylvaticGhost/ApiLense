@@ -57,4 +57,8 @@ export class TypedResult<T> {
   static badRequest<T>(errorMessage?: string): TypedResult<T> {
     return TypedResult.failure<T>(errorMessage, 400);
   }
+
+  static notFound<T>(errorMessage?: string): TypedResult<T> {
+    return TypedResult.failure<T>(errorMessage, 404);
+  }
 }

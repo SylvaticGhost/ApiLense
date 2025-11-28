@@ -1,13 +1,13 @@
 ﻿import { Command } from '@cliffy/command';
-import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
-import { IDispatcher } from '../infrastructure/mainDispatcher.ts';
-import { GroupService } from '../services/groupService.ts';
-import { SchemaService } from '../services/schemaService.ts';
+import { DependencyContainer } from '../../infrastructure/dependencyContainer.ts';
+import { IDispatcher } from '../../infrastructure/mainDispatcher.ts';
+import { GroupService } from '../../services/groupService.ts';
+import { SchemaService } from '../../services/schemaService.ts';
 import { Select } from '@cliffy/prompt';
 import { Table } from '@cliffy/table';
-import { StringValidators } from '../validators/stringValidators.ts';
-import { NumberValidator } from '../validators/fieldValidators/numberValidator.ts';
-import NamedColorProvider from '../infrastructure/providers/namedColorProvider.ts';
+import { StringValidators } from '../../validators/stringValidators.ts';
+import { NumberValidator } from '../../validators/fieldValidators/numberValidator.ts';
+import NamedColorProvider from '../../infrastructure/providers/namedColorProvider.ts';
 
 export class GroupCommandDispatcher implements IDispatcher {
   constructor(
@@ -92,7 +92,11 @@ export class GroupCommandDispatcher implements IDispatcher {
             colorHex = hexForName;
           }
         }
-        const result = await groupService.updateGroup(id, options.name, colorHex);
+        const result = await groupService.updateGroup(
+          id,
+          options.name,
+          colorHex,
+        );
         if (result.isFailure()) {
           console.error(result.errorMessage);
         } else {
@@ -231,11 +235,18 @@ export class GroupCommandDispatcher implements IDispatcher {
               const colorVal = g.color || '';
               let coloredLabel = '-';
               if (colorVal) {
-                const normalized = NamedColorProvider.normalizeHex(colorVal) || colorVal.replace('#', '').toUpperCase();
+                const normalized =
+                  NamedColorProvider.normalizeHex(colorVal) ||
+                  colorVal.replace('#', '').toUpperCase();
                 const name = NamedColorProvider.findNameForHex(normalized);
-                const label = name ? (name.charAt(0).toUpperCase() + name.slice(1)) : '#' + normalized;
+                const label = name
+                  ? name.charAt(0).toUpperCase() + name.slice(1)
+                  : '#' + normalized;
                 // Colorize text itself (foreground color)
-                coloredLabel = NamedColorProvider.colorizeTextByHex(normalized, label);
+                coloredLabel = NamedColorProvider.colorizeTextByHex(
+                  normalized,
+                  label,
+                );
               }
               table.push([g.id.toString(), g.name, coloredLabel]);
             });
@@ -329,10 +340,17 @@ export class GroupCommandDispatcher implements IDispatcher {
             const colorVal = g.color || '';
             let coloredLabel = '-';
             if (colorVal) {
-              const normalized = NamedColorProvider.normalizeHex(colorVal) || colorVal.replace('#', '').toUpperCase();
+              const normalized =
+                NamedColorProvider.normalizeHex(colorVal) ||
+                colorVal.replace('#', '').toUpperCase();
               const name = NamedColorProvider.findNameForHex(normalized);
-              const label = name ? (name.charAt(0).toUpperCase() + name.slice(1)) : '#' + normalized;
-              coloredLabel = NamedColorProvider.colorizeTextByHex(normalized, label);
+              const label = name
+                ? name.charAt(0).toUpperCase() + name.slice(1)
+                : '#' + normalized;
+              coloredLabel = NamedColorProvider.colorizeTextByHex(
+                normalized,
+                label,
+              );
             }
             table.push([g.id.toString(), g.name, coloredLabel]);
           });

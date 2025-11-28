@@ -6,6 +6,7 @@ import { SchemaRepository } from '../repositories/schemaRepo.ts';
 import { TemplateFillingRepository } from '../repositories/templateFillingRepository.ts';
 import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
+import { TypedResult } from '../utils/typedResult.ts';
 import { TemplateFillingValidator } from '../validators/templateFillingValidator.ts';
 import { EndpointService } from './endpointService.ts';
 
@@ -76,6 +77,29 @@ export class TemplateFillingService {
     }
 
     return resultBuilder.success(templateFilling);
+  }
+
+  async listTemplates(
+    schemaId: number,
+    endpointName: string,
+  ): Promise<TypedResult<TemplateFilling[]>> {
+    const endpointResult = await this.endpointService.getEndpointByRef(
+      schemaId,
+      endpointName,
+    );
+    if (endpointResult.isFailure()) {
+      return TypedResult.notFound<TemplateFilling[]>(
+        `Endpoint "${endpointName}" in schema ID ${schemaId} not found`,
+      );
+    }
+
+    const templates: TemplateFilling[] =
+      await this.templateFillingRepository.getAllByEndpoint(
+        schemaId,
+        endpointName,
+      );
+
+    return TypedResult.success<TemplateFilling[]>(templates);
   }
 
   async getTemplate(
