@@ -1,15 +1,14 @@
 import { assert, assertEquals } from '@std/assert';
 import { ensureDir } from '@std/fs';
 import { join, dirname, fromFileUrl } from '@std/path';
-
 import { DependencyContainer } from '../../src/infrastructure/dependencyContainer.ts';
 import { DependencyRegistration } from '../../src/infrastructure/dependencyRegistration.ts';
-
 import { SchemaService } from '../../src/services/schemaService.ts';
 import { SchemaRepository } from '../../src/repositories/schemaRepo.ts';
 import { EndpointMetaDataRepository } from '../../src/repositories/enpointMetaDataRepository.ts';
 import { EndpointRepository } from '../../src/repositories/endpointRepository.ts';
 import { PrismaClient } from '../../prisma/generated/client.ts';
+import { initTestDatabaseWithPrisma } from '../utils/testDbInit.ts';
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 const projectRoot = join(__dirname, '../../');
@@ -27,46 +26,12 @@ const testApiSchemaPath = join(
   'testApiSchema.json',
 );
 
-async function initTestDatabaseWithPrisma() {
-  await ensureDir(volumePath);
-
-  try {
-    await Deno.remove(testDbFile);
-  } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) {
-      throw error;
-    }
-  }
-
-  const command = new Deno.Command(Deno.execPath(), {
-    args: [
-      'run',
-      '-A',
-      'npm:prisma',
-      'db',
-      'push',
-      '--schema',
-      prismaSchemaPath,
-    ],
-    env: {
-      DATABASE_URL: `file:${testDbFile}`,
-    },
-  });
-
-  const { code, stderr } = await command.output();
-
-  if (code !== 0) {
-    const errText = new TextDecoder().decode(stderr);
-    throw new Error(`Prisma db push failed: ${errText}`);
-  }
-}
-
 Deno.test({
   name: 'imports an OpenAPI schema from URL and stores it using Prisma and the file system',
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async () => {
-    await initTestDatabaseWithPrisma();
+    await initTestDatabaseWithPrisma(volumePath, prismaSchemaPath, testDbFile);
 
     Deno.env.set('DATABASE_URL', `file:${testDbFile}`);
     await ensureDir(schemaLocationPath);
