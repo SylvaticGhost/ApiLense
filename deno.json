@@ -45,5 +45,8 @@
       "tags": ["recommended"],
       "exclude": ["no-explicit-any", "ban-untagged-todo"]
     }
+  },
+  "bench": {
+    "include": ["tests/benchmarks/**/*.benchmark.ts", "tests/benchmarks/**/*{.,_,-}bench.{ts,tsx,js,jsx,mjs,cjs}"]
   }
 }
