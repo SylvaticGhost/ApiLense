@@ -1,13 +1,13 @@
 import { Command } from '@cliffy/command';
-import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
-import { IDispatcher } from '../infrastructure/mainDispatcher.ts';
-import { TemplateFillingService } from '../services/templateFillingService.ts';
-import { TemplateFillingNewArgs } from '../contracts/templateFillingCommandsArgs.ts';
-import { TemplateFilling } from '../core/templateFilling.ts';
-import { CommandLogic } from '../infrastructure/commandLogic.ts';
-import { Guard } from '../utils/guard.ts';
-import { StringBuilder } from '../utils/stringBuilder.ts';
-import { FileUrl } from '../utils/types/fileUrl.ts';
+import { DependencyContainer } from '../../infrastructure/dependencyContainer.ts';
+import { IDispatcher } from '../../infrastructure/mainDispatcher.ts';
+import { TemplateFillingService } from '../../services/templateFillingService.ts';
+import { TemplateFillingNewArgs } from '../../contracts/templateFillingCommandsArgs.ts';
+import { TemplateFilling } from '../../core/templateFilling.ts';
+import { CommandLogic } from '../../infrastructure/commandLogic.ts';
+import { Guard } from '../../utils/guard.ts';
+import { StringBuilder } from '../../utils/stringBuilder.ts';
+import { FileUrl } from '../../utils/types/fileUrl.ts';
 import { colors } from '@cliffy/ansi/colors';
 
 interface TemplateFillingNewPureArgs {

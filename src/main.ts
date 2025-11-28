@@ -3,10 +3,10 @@ import { HelpCommand } from '@cliffy/command/help';
 import { DependencyContainer } from './infrastructure/dependencyContainer.ts';
 import { DependencyRegistration } from './infrastructure/dependencyRegistration.ts';
 import { MainDispatcher } from './infrastructure/mainDispatcher.ts';
-import { SchemaCommandDispatcher } from './commands/schemaCommandDispatcher.ts';
-import { GroupCommandDispatcher } from './commands/groupCommandDispatcher.ts';
-import { TemplateFillingDispatcher } from './commands/templateFillingDispatcher.ts';
-import { TestCommandDispatcher } from './commands/testCommandDispatcher.ts';
+import { SchemaCommandDispatcher } from './cli/commands/schemaCommandDispatcher.ts';
+import { GroupCommandDispatcher } from './cli/commands/groupCommandDispatcher.ts';
+import { TemplateFillingDispatcher } from './cli/commands/templateFillingDispatcher.ts';
+import { TestCommandDispatcher } from './cli/commands/testCommandDispatcher.ts';
 
 const container = new DependencyContainer();
 const registrator = new DependencyRegistration(container);

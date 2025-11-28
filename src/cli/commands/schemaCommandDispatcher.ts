@@ -1,25 +1,24 @@
 ﻿import { Command } from '@cliffy/command';
 import { Table } from '@cliffy/table';
 import { Select } from '@cliffy/prompt';
-import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
-import { SchemaService } from '../services/schemaService.ts';
-import { SchemaCommandPrinters } from '../utils/printers/schemaCommandPrinters.ts';
-import { CommandLogic } from '../infrastructure/commandLogic.ts';
+import { DependencyContainer } from '../../infrastructure/dependencyContainer.ts';
+import { SchemaService } from '../../services/schemaService.ts';
+import { SchemaCommandPrinters } from '../../utils/printers/schemaCommandPrinters.ts';
+import { CommandLogic } from '../../infrastructure/commandLogic.ts';
 import {
   SchemaEndpointsListArgs,
   SchemaRemoveArgs,
-} from '../contracts/schemaCommandsArgs.ts';
-import { EndpointMetaData } from '../core/endpoint.ts';
-import { StringBuilder } from '../utils/stringBuilder.ts';
-import { PagedList } from '../utils/types/pagedList.ts';
-import { ColorProvider } from '../infrastructure/providers/colorProvider.ts';
-import { HTTP_METHODS } from '../core/enums.ts';
-import { SchemaCommandStrings } from './output/schemaCommandStrings.ts';
-import { ApiSchema } from '../core/apiSchema.ts';
-import { TemplateFillingService } from '../services/templateFillingService.ts';
-import { FileUrl } from '../utils/types/fileUrl.ts';
+} from '../../contracts/schemaCommandsArgs.ts';
+import { EndpointMetaData } from '../../core/endpoint.ts';
+import { StringBuilder } from '../../utils/stringBuilder.ts';
+import { PagedList } from '../../utils/types/pagedList.ts';
+import { ColorProvider } from '../../infrastructure/providers/colorProvider.ts';
+import { HTTP_METHODS } from '../../core/enums.ts';
+import { SchemaCommandStrings } from './../outputs/schemaCommandStrings.ts';
+import { ApiSchema } from '../../core/apiSchema.ts';
+import { TemplateFillingService } from '../../services/templateFillingService.ts';
 import { colors } from '@cliffy/ansi/colors';
-import { TemplateCommandStrings } from './output/templateCommandStrings.ts';
+import { TemplateCommandStrings } from './../outputs/templateCommandStrings.ts';
 
 interface SchemaRemovePureArgs {
   schemaId?: number | undefined;

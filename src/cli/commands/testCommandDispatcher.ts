@@ -1,13 +1,13 @@
 import { Command } from '@cliffy/command';
-import { IDispatcher } from '../infrastructure/mainDispatcher.ts';
-import { CommandLogic } from '../infrastructure/commandLogic.ts';
-import { ApiCallReport } from '../core/apiCallReport.ts';
-import { DependencyContainer } from '../infrastructure/dependencyContainer.ts';
-import { TestService } from '../services/testService.ts';
-import { RunEndpointCommandArgs } from '../contracts/testCommandArgs.ts';
-import { TestReport } from '../core/testReport.ts';
-import { PlotService } from '../services/plotService.ts';
-import { TestResultPrinter } from '../utils/printers/testResultPrinter.ts';
+import { IDispatcher } from '../../infrastructure/mainDispatcher.ts';
+import { CommandLogic } from '../../infrastructure/commandLogic.ts';
+import { ApiCallReport } from '../../core/apiCallReport.ts';
+import { DependencyContainer } from '../../infrastructure/dependencyContainer.ts';
+import { TestService } from '../../services/testService.ts';
+import { RunEndpointCommandArgs } from '../../contracts/testCommandArgs.ts';
+import { TestReport } from '../../core/testReport.ts';
+import { PlotService } from '../../services/plotService.ts';
+import { TestResultPrinter } from '../../utils/printers/testResultPrinter.ts';
 
 interface RunEndpointCommandArgsPure {
   schema?: number | undefined;
