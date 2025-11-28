@@ -5,6 +5,7 @@ export class StatAnalizer {
   constructor(private readonly data: ApiCallReport[][]) {}
 
   private statusCodeDistributionDict: Map<number, number> | null = null;
+
   statusCodeDistribution(): Map<number, number> {
     this.statusCodeDistributionDict = new Map<number, number>();
 
@@ -69,12 +70,32 @@ export class StatAnalizer {
 export class NumericStatAnalizer {
   constructor(private readonly data: number[]) {}
 
+  private sorted: number[] | null = null;
+
+  private sortedData(): number[] {
+    if (!this.sorted) this.sorted = [...this.data].sort((a, b) => a - b);
+    return this.sorted;
+  }
+
   getMin(): number {
-    return Math.min(...this.data);
+    if (this.data.length === 0) return NaN;
+    if (this.sorted) return this.sorted[0];
+    let min = this.data[0];
+    for (const value of this.data) {
+      if (value < min) min = value;
+    }
+    return min;
   }
 
   getMax(): number {
-    return Math.max(...this.data);
+    if (this.data.length === 0) return NaN;
+
+    if (this.sorted) return this.sorted[this.sorted.length - 1];
+    let max = this.data[0];
+    for (const value of this.data) {
+      if (value > max) max = value;
+    }
+    return max;
   }
 
   getAverage(): number {
@@ -83,7 +104,7 @@ export class NumericStatAnalizer {
   }
 
   getPercentile(percentile: number): number {
-    const sorted = [...this.data].sort((a, b) => a - b);
+    const sorted = this.sortedData();
     const index = (percentile / 100) * (sorted.length - 1);
     if (Math.floor(index) === index) {
       return sorted[index];

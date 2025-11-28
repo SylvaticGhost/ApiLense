@@ -1,7 +1,7 @@
 import { assertEquals } from '@std/assert';
-import { parseApiSchemaFromFile } from '../src/mapper/schemaParser.ts';
-import { ApiSchema } from '../src/core/apiSchema.ts';
-import { HTTP_METHODS } from '../src/core/enums.ts';
+import { ApiSchema } from '../../../src/core/apiSchema.ts';
+import { parseApiSchemaFromFile } from '../../../src/mapper/schemaParser.ts';
+import { HTTP_METHODS } from '../../../src/core/enums.ts';
 
 Deno.test(
   'parseApiSchemaFromFile parses full FunDay OpenAPI schema correctly',
