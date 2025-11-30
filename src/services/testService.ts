@@ -66,10 +66,9 @@ export class TestService {
       templateFilling = templateFillingGetResult.castValue<TemplateFilling>();
     }
 
-    if (!templateFilling)
-      console.log(
-        `❯ No template filling provided by reference "${templateRef}"`,
-      );
+    const benchMode = Deno.env.get('BENCH_MODE') === '1';
+    if (!templateFilling && !benchMode)
+      console.log(`❯ No template filling provided by reference "${templateRef}"`);
 
     if (mode == 'multiple')
       return await this.runMultipleRequests(

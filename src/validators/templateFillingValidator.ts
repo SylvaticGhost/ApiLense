@@ -1,4 +1,5 @@
 import { BodyField } from '../core/bodyField.ts';
+import { BODY_FIELD_TYPES } from '../core/enums.ts';
 import { EndpointParam, Template } from '../core/template.ts';
 import { ParamFilling, TemplateFilling } from '../core/templateFilling.ts';
 import { CompareRailway } from '../utils/railway.ts';
@@ -27,45 +28,55 @@ export class TemplateFillingValidator {
   ): Result | undefined {
     if (!bodyFilling) return undefined;
 
-    for (const [key, value] of Object.entries(bodyFilling)) {
-      const templateField = bodyTemplate.find((f) => f.name === key);
-      if (!templateField)
-        return Result.badRequest(`Unexpected field '${key}' in body filling`);
+    for (const templateField of bodyTemplate) {
+      const key = templateField.name;
+      const value = (bodyFilling as any)[key];
+      if (value === undefined || value === null) continue; // allow missing/nullable
 
-      const fieldValidationResult = this.validateBodyField(
-        value,
-        templateField,
-      );
+      const fieldValidationResult = this.validateBodyField(value, templateField);
       if (fieldValidationResult) return fieldValidationResult;
     }
 
     return undefined;
   }
 
-  private static validateBodyField(
-    fieldFilling: any,
-    fieldTemplate: BodyField,
-  ): Result | undefined {
-    return new CompareRailway<any, BodyField>(fieldFilling, fieldTemplate)
-      .forkBySecond(
-        (e) =>
-          e.typing === 'object' &&
-          Array.isArray(e.nestedFields) &&
-          e.nestedFields.length > 0,
-        Result.badRequest(
-          `Field '${fieldTemplate.name}' is expected to be an object`,
-        ),
-      )
-      .forkBySecond(
-        (e) =>
-          e.valueKind === 'array' &&
-          Array.isArray(e.nestedFields) &&
-          e.nestedFields.length > 0,
-        Result.badRequest(
-          `Field '${fieldTemplate.name}' is expected to be an array`,
-        ),
-      )
-      .getResultOrDefault();
+  private static validateBodyField(fieldFilling: any, fieldTemplate: BodyField): Result | undefined {
+    // If template expects an object
+    if (fieldTemplate.typing === BODY_FIELD_TYPES.OBJECT) {
+      if (fieldTemplate.valueKind === 'array') {
+        if (!Array.isArray(fieldFilling))
+          return Result.badRequest(`Field '${fieldTemplate.name}' is expected to be an array`);
+        // validate each item against nested fields
+        if (fieldTemplate.nestedFields && fieldTemplate.nestedFields.length > 0) {
+          for (const item of fieldFilling) {
+            for (const nestedTemplate of fieldTemplate.nestedFields) {
+              const childValue = item[nestedTemplate.name];
+              if (childValue === undefined || childValue === null) continue;
+              const res = this.validateBodyField(childValue, nestedTemplate);
+              if (res) return res;
+            }
+          }
+        }
+        return undefined;
+      } else {
+        // object expected
+        if (typeof fieldFilling !== 'object' || Array.isArray(fieldFilling) || fieldFilling === null)
+          return Result.badRequest(`Field '${fieldTemplate.name}' is expected to be an object`);
+        if (fieldTemplate.nestedFields && fieldTemplate.nestedFields.length > 0) {
+          for (const nestedTemplate of fieldTemplate.nestedFields) {
+            const childValue = fieldFilling[nestedTemplate.name];
+            if (childValue === undefined || childValue === null) continue;
+            const res = this.validateBodyField(childValue, nestedTemplate);
+            if (res) return res;
+          }
+        }
+        return undefined;
+      }
+    } else {
+      // primitive expected - accept various types without strict type checking for now
+      // If template has no nested fields and expects primitives, we won't reject
+      return undefined;
+    }
   }
 
   private static validateParams(

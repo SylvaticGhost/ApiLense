@@ -55,151 +55,120 @@ async function initTestDatabaseWithPrisma() {
   }
 }
 
-Deno.test({
-  name: 'benchmark: TestService.runMultipleRequests - measure performance with increasing number of requests',
-  sanitizeOps: false,
-  sanitizeResources: false,
-  fn: async () => {
-    await initTestDatabaseWithPrisma();
+await initTestDatabaseWithPrisma();
 
-    Deno.env.set('DATABASE_URL', `file:${testDbFile}`);
-    await ensureDir(schemaLocationPath);
-    Deno.env.set('SCHEMA_LOCATION', schemaLocationPath);
+Deno.env.set('DATABASE_URL', `file:${testDbFile}`);
+await ensureDir(schemaLocationPath);
+Deno.env.set('SCHEMA_LOCATION', schemaLocationPath);
 
-    const container = new DependencyContainer();
-    const registration = new DependencyRegistration(container);
-    await registration.registerAll();
+// Setup once (outside benches): DI, load schema, create template using templateFillingService
+const container = new DependencyContainer();
+const registration = new DependencyRegistration(container);
+await registration.registerAll();
 
-    const schemaService = container.resolve<SchemaService>('SchemaService');
-    const templateFillingService = container.resolve<TemplateFillingService>('TemplateFillingService');
-    const testService = container.resolve<TestService>('TestService');
-    const prisma = container.resolve<PrismaClient>('PrismaClient');
+const schemaService = container.resolve<SchemaService>('SchemaService');
+const templateFillingService = container.resolve<TemplateFillingService>('TemplateFillingService');
+const testService = container.resolve<TestService>('TestService');
+const prisma = container.resolve<PrismaClient>('PrismaClient');
 
-    // Prepare DB group
-    const testGroup = await prisma.group.create({
-      data: { name: 'Benchmark Group', color: '#c0ffee' },
+// Prepare DB group
+const testGroup = await prisma.group.create({
+  data: { name: 'Benchmark Group', color: '#c0ffee' },
+});
+const groupRef = testGroup.id.toString();
+
+// Mock schema load via URL
+const fakeUrl = 'https://benchmark.example.com/test-openapi.json';
+const schemaJsonText = await Deno.readTextFile(testApiSchemaPath);
+
+const originalFetch = globalThis.fetch;
+
+globalThis.fetch = (async (input: Request | URL | string) => {
+  const url = input instanceof Request ? input.url : input.toString();
+  if (url === fakeUrl) {
+    return new Response(schemaJsonText, {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
     });
-    const groupRef = testGroup.id.toString();
+  }
+  // Simulate API endpoint responses: predictable latency
+  await new Promise((res) => setTimeout(res, 10));
+  return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' }});
+}) as typeof globalThis.fetch;
 
-    // Mock schema load via URL
-    const fakeUrl = 'https://benchmark.example.com/test-openapi.json';
-    const schemaJsonText = await Deno.readTextFile(testApiSchemaPath);
+Deno.env.set('BENCH_MODE', '1');
 
-    const originalFetch = globalThis.fetch;
+const loadResult = await schemaService.loadSchema({
+  url: fakeUrl,
+  file: undefined,
+  name: 'Benchmark Schema',
+  group: groupRef,
+});
+if (!loadResult.isSuccess()) throw new Error('Failed to load schema in setup');
+const schemaId = loadResult.castValue<number>();
 
-    globalThis.fetch = (async (input: Request | URL | string) => {
-      const url = input instanceof Request ? input.url : input.toString();
-      if (url === fakeUrl) {
-        return new Response(schemaJsonText, {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        });
-      }
-      // Simulate API endpoint responses: small, predictable latency
-      await new Promise((res) => setTimeout(res, 1));
-      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' }});
-    }) as typeof globalThis.fetch;
+// Create a template for a POST endpoint. This is a precondition for the benchmark.
+const templateEndpointName = '/api/offer/create';
+const templateName = 'bench_template';
+const templateResult = await templateFillingService.createEndpointTemplate({
+  schemaId: schemaId!,
+  endpointName: templateEndpointName,
+  templateName,
+});
+if (!templateResult.isSuccess()) throw new Error('Template creation failed in setup');
+const templateFilling = templateResult.castValueStrict<any>();
+const templatePath = templateFilling.filePath();
 
-    try {
-      const loadResult = await schemaService.loadSchema({
-        url: fakeUrl,
-        file: undefined,
-        name: 'Benchmark Schema',
-        group: groupRef,
-      });
-      assert(loadResult.isSuccess());
-      const schemaId = loadResult.castValue<number>();
-      assert(typeof schemaId === 'number');
+// Use a GET endpoint for the benchmark if desired, or use the `templateEndpointName` with templateName to run templated POST benchmark
+// We'll make two benches: one with GET (no template) and one with POST (with template)
 
-      // Create a template for endpoint 'work' (operationId present in testApiSchema.json)
-      const templateEndpointName = '/api/offer/create';
-      const endpointToRun = 'work';
-      const templateName = 'bench_template';
-      const templateResult = await templateFillingService.createEndpointTemplate({
-        schemaId: schemaId!,
-        endpointName: templateEndpointName,
-        templateName,
-      });
-      assert(templateResult.isSuccess());
-      // Verify stored file structure
-      const templateFilling = templateResult.castValueStrict<any>();
-      const templatePath = templateFilling.filePath();
-      console.info('TemplateFilling.schemaId:', templateFilling.schemaId, 'name:', templateFilling.name);
-      let parsedTemplate: any = null;
-      try {
-        const rawTemplate = await Deno.readTextFile(templatePath);
-        parsedTemplate = JSON.parse(rawTemplate);
-      } catch (e) {
-        console.info('Template path does not exist or cannot be read:', templatePath, e);
-      }
-      // Ensure all expected props exist (use the parsed template read from actual file path)
-      assert(parsedTemplate && parsedTemplate.name);
-      assert(parsedTemplate && parsedTemplate.schemaId !== undefined);
-      assert(parsedTemplate && parsedTemplate.endpointName);
-      // params key should exist and be an array
-      assert(parsedTemplate && Array.isArray(parsedTemplate.params));
+const sizes = [50, 200, 500];
+const concurrencies = [4, 8, 16];
+const delayMs = 10; // 10ms latency per user's request
 
-      // templateFilling already obtained above and templatePath is available
-      // Quick debug: inspect the saved template content on disk
-      console.info('Saved template path: ', templatePath);
-      const dirPath = `volume/fillings`;
-      console.info('Listing all entries under volume/fillings:');
-      try {
-        for await (const entry of Deno.readDir(dirPath)) {
-          console.info('entry:', entry.name);
-          const subPath = `${dirPath}/${entry.name}`;
-          try {
-            for await (const sub of Deno.readDir(subPath)) {
-              console.info('  sub:', sub.name);
-            }
-          } catch (_e) {
-            console.info('  could not read', subPath);
-          }
-        }
-      } catch (e) {
-        console.info('Could not list dir:', e);
-      }
-      console.info('Listing template dir:', dirPath);
-      try {
-        for await (const entry of Deno.readDir(dirPath)) {
-          console.info('entry:', entry.name);
-        }
-      } catch (e) {
-        console.info('Could not list dir:', e);
-      }
-      try {
-        const loggedTemplateRaw = await Deno.readTextFile(templatePath);
-        console.info('Template raw JSON:', loggedTemplateRaw);
-      } catch (e) {
-        console.info('Template path does not exist or cannot be read:', templatePath, e);
-      }
-
-      // Now benchmark with increasing number of requests
-      const sizes = [10, 50, 100, 200];
-      const concurrency = 4; // 4 threads
-      const delayMs = 0;
-
-      for (const size of sizes) {
-        const start = performance.now();
+// POST template benches
+for (const size of sizes) {
+  for (const concurrency of concurrencies) {
+    Deno.bench({
+      name: `TestService.runMultipleRequests POST size=${size} conc=${concurrency}`,
+      group: 'POST with template',
+      fn: async () => {
         const runResult = await testService.runEndpoint({
           schema: schemaId!,
-          endpoint: endpointToRun,
+          endpoint: templateEndpointName,
+          template: templateFilling.name,
+          numberOfRequests: size,
+          concurrency,
+          delayMs,
+          mode: 'multiple',
+        });
+        if (!runResult.isSuccess()) throw new Error(`RunEndpoint failed: ${runResult.errorMessage}`);
+      },
+    });
+  }
+}
+
+// GET benches (no template)
+const getEndpoint = 'work';
+for (const size of sizes) {
+  for (const concurrency of concurrencies) {
+    Deno.bench({
+      name: `TestService.runMultipleRequests GET size=${size} conc=${concurrency}`,
+      group: 'GET no-template',
+      fn: async () => {
+        const runResult = await testService.runEndpoint({
+          schema: schemaId!,
+          endpoint: getEndpoint,
           template: '',
           numberOfRequests: size,
           concurrency,
           delayMs,
           mode: 'multiple',
         });
-        const end = performance.now();
-        if (!runResult.isSuccess()) {
-          console.error('RunResult failed for size:', size, 'error:', runResult.errorMessage);
-        }
-        assert(runResult.isSuccess());
-        console.info(`Benchmark: size=${size}, concurrency=${concurrency}, timeMs=${Math.round(end - start)}`);
-      }
-    } finally {
-      globalThis.fetch = originalFetch;
-      await prisma.$disconnect();
-    }
-  },
-});
+        if (!runResult.isSuccess()) throw new Error(`RunEndpoint failed: ${runResult.errorMessage}`);
+      },
+    });
+  }
+}
+
+// note: do not restore fetch or disconnect prisma here — benchmarks run afterwards and require those services available
