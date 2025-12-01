@@ -1,7 +1,9 @@
 import { Table } from 'https://deno.land/x/cliffy@v0.25.4/table/mod.ts';
 import { colors } from '@cliffy/ansi/colors';
-import { NumericStartReport } from '../core/numericStartReport.ts';
-import { NumericStatAnalizer } from '../core/statAnalizer.ts';
+import {
+  NumericStatAnalizer,
+  NumericStartReport,
+} from '@api-lense/api-lense-math';
 import { AggregatedResult } from '../core/aggregatedResult.ts';
 
 export class PlotService {
