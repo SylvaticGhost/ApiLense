@@ -1,6 +1,7 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@api-lense/api-lense-math@0.1": "0.1.0",
     "jsr:@cliffy/ansi@1.0.0-rc.8": "1.0.0-rc.8",
     "jsr:@cliffy/ansi@^1.0.0-rc.8": "1.0.0-rc.8",
     "jsr:@cliffy/command@^1.0.0-rc.8": "1.0.0-rc.8",
@@ -39,6 +40,9 @@
     "npm:prisma@latest": "6.16.2"
   },
   "jsr": {
+    "@api-lense/api-lense-math@0.1.0": {
+      "integrity": "641525eaebed5153611cb575e214ec889fea03f9fb6c79af15dec38227431094"
+    },
     "@cliffy/ansi@1.0.0-rc.8": {
       "integrity": "ba37f10ce55bbfbdd8ddd987f91f029b17bce88385b98ba3058870f3b007b80c",
       "dependencies": [
@@ -779,6 +783,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@api-lense/api-lense-math@0.1",
       "jsr:@cliffy/ansi@^1.0.0-rc.8",
       "jsr:@cliffy/command@^1.0.0-rc.8",
       "jsr:@cliffy/prompt@^1.0.0-rc.8",

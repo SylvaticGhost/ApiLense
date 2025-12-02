@@ -2,8 +2,8 @@ name: packageBuilding
 
 on:
   push:
-    branches: ['release-v*.*.*']
-    tags: ['v*.*.*']
+    branches: ["release-v*.*.*"]
+    tags: ["v*.*.*"]
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
           else
             VERSION=""
           fi
-          echo "##[set-output name=version;]$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
@@ -60,7 +60,7 @@ jobs:
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: 'v${{ steps.extract_version.outputs.version }}'
+          tag_name: "v${{ steps.extract_version.outputs.version }}"
           files: |
             ./build/apilense-windows.zip
             ./build/apilense-mac-intel.zip
@@ -71,7 +71,25 @@ jobs:
       - name: Create revision tag
         if: startsWith(github.ref, 'refs/heads/release-v')
         run: |
+          set -euo pipefail
+          VERSION="v${{ steps.extract_version.outputs.version }}"
+          if [[ -z "${{ steps.extract_version.outputs.version }}" ]]; then
+            echo "No version extracted, skipping tag creation."
+            exit 0
+          fi
+
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git tag "v${{ steps.extract_version.outputs.version }}"
-          git push origin "v${{ steps.extract_version.outputs.version }}"
+
+          # Ensure we know remote tags
+          git fetch --tags --force
+
+          # Skip if tag already exists on remote
+          if git ls-remote --tags origin "$VERSION" | grep -qE "$VERSION(\^\{\})?$"; then
+            echo "Tag $VERSION already exists on remote, skipping push."
+            exit 0
+          fi
+
+          # Create and push tag
+          git tag "$VERSION"
+          git push origin "$VERSION"

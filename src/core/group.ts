@@ -3,16 +3,21 @@ import { ApiSchema } from './apiSchema.ts';
 export class Group {
   id: number;
   name: string;
+
+  /*
+   * Hex color code without #
+   */
   color?: string;
-  createdAt: Date;
-  updatedAt: Date;
+
+  createdAt?: Date;
+  updatedAt?: Date;
   Schemas: ApiSchema[];
 
   constructor(
     id: number,
     name: string,
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt?: Date,
+    updatedAt?: Date,
     color?: string,
     schemas?: ApiSchema[],
   ) {

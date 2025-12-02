@@ -157,7 +157,7 @@ export class TemplateFilling {
     const endpointPath = strictGet(obj, (o) => o.endpointPath);
     const method = strictGet(obj, (o) => o.method);
     const params = strictGet(obj, (o) => o.params);
-    const body = strictGet(obj, (o) => o.bodyFilling);
+    const body = obj.bodyFilling; // can be null
     return new TemplateFilling(
       name,
       schemaId,

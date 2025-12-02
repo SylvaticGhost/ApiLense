@@ -75,7 +75,7 @@ export class SchemaService {
       this.endpointMetaDataRepository.listBySchemaId(
         schema.id,
         args.size,
-        (args.page - 1) * args.size,
+        args.page >= 0 ? (args.page - 1) * args.size : -1,
         args.method,
       ),
     );
