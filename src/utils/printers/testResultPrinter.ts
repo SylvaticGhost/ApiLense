@@ -4,7 +4,8 @@ import { PlotService } from '../../services/plotService.ts';
 import { StringBuilder } from '../stringBuilder.ts';
 import { colors } from '@cliffy/ansi/colors';
 import { StatementPrinter } from './statementPrinter.ts';
-import { NumericStatAnalizer, StatAnalizer } from '../../core/statAnalizer.ts';
+import { StatAnalizer } from '../../core/statAnalizer.ts';
+import { NumericStatAnalizer } from '@api-lense/api-lense-math';
 import { AggregatedResult } from '../../core/aggregatedResult.ts';
 
 export class TestResultPrinter {

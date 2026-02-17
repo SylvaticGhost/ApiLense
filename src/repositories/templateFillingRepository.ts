@@ -1,4 +1,5 @@
 import { TemplateFilling } from '../core/templateFilling.ts';
+import { FileHelpers } from '../helpers/fileHelpers.ts';
 import { FileSystemBasedRepository } from './Bases/fileSystemBasedRepository.ts';
 
 export class TemplateFillingRepository extends FileSystemBasedRepository {
@@ -25,6 +26,25 @@ export class TemplateFillingRepository extends FileSystemBasedRepository {
       filePath,
       TemplateFilling.fromJson,
     );
+  }
+
+  async getAllByEndpoint(
+    schemaId: number,
+    endpointName: string,
+  ): Promise<TemplateFilling[]> {
+    endpointName = FileHelpers.transformFileName(endpointName);
+    const dirPath = `volume/fillings/${schemaId}/${endpointName}`;
+    const files = await FileHelpers.getFilesInDirectory(dirPath);
+    const templateFillings: TemplateFilling[] = [];
+    for (const filePath of files) {
+      const templateFilling =
+        await super.readObjectFromFileWithFactory<TemplateFilling>(
+          filePath,
+          TemplateFilling.fromJson,
+        );
+      templateFillings.push(templateFilling);
+    }
+    return templateFillings;
   }
 
   deleteBySchemaId(schemaId: number): Promise<void> {
