@@ -44,6 +44,15 @@ export class Result {
     return this.isSuccess();
   }
 
+  json(): string {
+    return JSON.stringify({
+      statusCode: this.statusCode,
+      errorMessage: this.errorMessage,
+      value: this.value,
+      warningMessage: this.warningMessage,
+    });
+  }
+
   public static success(
     value: any = null,
     statusCode: number = 200,

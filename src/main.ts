@@ -18,6 +18,7 @@ await new MainDispatcher(new Command(), container)
       .name('ApiLens')
       .version('0.1.0')
       .description('Web API performance testing tool')
+      .globalOption('--json', 'Output results in JSON format')
       .command('help', new HelpCommand().global())
       .default('help');
   })

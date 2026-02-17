@@ -6,6 +6,7 @@ import { SchemaService } from '../services/schemaService.ts';
 import { SchemaCommandPrinters } from '../utils/printers/schemaCommandPrinters.ts';
 import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import {
+  LoadSchemaArgs,
   SchemaEndpointsListArgs,
   SchemaRemoveArgs,
 } from '../contracts/schemaCommandsArgs.ts';
@@ -14,12 +15,21 @@ import { StringBuilder } from '../utils/stringBuilder.ts';
 import { PagedList } from '../utils/types/pagedList.ts';
 import { ColorProvider } from '../infrastructure/providers/colorProvider.ts';
 import { HTTP_METHODS } from '../core/enums.ts';
+import { PureArgs } from '../contracts/commonArgs.ts';
+import { ApiSchema } from '../core/apiSchema.ts';
 
-interface SchemaRemovePureArgs {
+interface SchemaLoadPureArgs extends PureArgs {
+  file?: string | undefined;
+  url?: string | undefined;
+  name?: string | undefined;
+  group?: string | undefined;
+}
+
+interface SchemaRemovePureArgs extends PureArgs {
   schemaId?: number | undefined;
 }
 
-interface SchemaEndpointsListPureArgs {
+interface SchemaEndpointsListPureArgs extends PureArgs {
   schemaId?: number | undefined;
   method?: string | undefined;
   page?: number | undefined;
@@ -55,7 +65,43 @@ export class SchemaCommandDispatcher {
         const result = await this.schemaService.loadSchema(args);
 
         SchemaCommandPrinters.loadSchema(result);
+
+        return CommandLogic.define<
+          SchemaLoadPureArgs,
+          LoadSchemaArgs,
+          ApiSchema
+        >()
+          .withValidation((argValidator) => {
+            argValidator
+              .for(
+                (a) => a.file,
+                (v) => v.defineName('file').optional(),
+              )
+              .for(
+                (a) => a.url,
+                (v) => v.defineName('url').optional(),
+              )
+              .for(
+                (a) => a.name,
+                (v) => v.defineName('name').optional(),
+              )
+              .for(
+                (a) => a.group,
+                (v) => v.defineName('group').optional(),
+              )
+              .map((args) => {
+                return args as LoadSchemaArgs;
+              });
+          })
+          .withLogic(async (args) => {
+            return await this.schemaService.loadSchema(args);
+          })
+          .withResultDisplay((result) => {
+            SchemaCommandPrinters.loadSchema(result);
+          })
+          .execute(args);
       })
+
       // schema-list
       .command('schema-list', 'List all loaded schemas')
       .alias('sl')

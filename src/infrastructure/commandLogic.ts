@@ -1,8 +1,9 @@
+import { PureArgs } from '../contracts/commonArgs.ts';
 import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
 import { ArgValidator } from '../validators/argValidator.ts';
 
-export class CommandLogic<TArgs, TInput, TResult> {
+export class CommandLogic<TArgs extends PureArgs, TInput, TResult> {
   constructor(
     private validationFunc: (argValidator: ArgValidator<TArgs>) => Result,
     private logicFunc: (input: TInput) => Promise<Result>,
@@ -29,6 +30,12 @@ export class CommandLogic<TArgs, TInput, TResult> {
     const input = validationResult.castValueStrict<TInput>();
     Guard.against.nullOrUndefined(input, 'input');
     const logicResult = await this.logicFunc(input);
+
+    if (args.json) {
+      const json = logicResult.json();
+      console.log(json);
+      return;
+    }
 
     if (logicResult.isFailure()) {
       this.logFailure(logicResult);
