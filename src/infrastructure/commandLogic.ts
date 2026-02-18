@@ -10,11 +10,11 @@ export class CommandLogic<TArgs extends PureArgs, TInput, TResult> {
     private resultDisplayFunc: (result: Result) => void,
   ) {}
 
-  static define<TArgs, TInput, TResult>(): CommandLogicBuilderValidationStep<
-    TArgs,
+  static define<
+    TArgs extends PureArgs,
     TInput,
-    TResult
-  > {
+    TResult,
+  >(): CommandLogicBuilderValidationStep<TArgs, TInput, TResult> {
     return new CommandLogicBuilder<TArgs, TInput, TResult>();
   }
 
@@ -49,7 +49,7 @@ export class CommandLogic<TArgs extends PureArgs, TInput, TResult> {
   }
 }
 
-class CommandLogicBuilder<TArgs, TInput, TResult>
+class CommandLogicBuilder<TArgs extends PureArgs, TInput, TResult>
   implements
     CommandLogicBuilderValidationStep<TArgs, TInput, TResult>,
     CommandLogicBuilderLogicStep<TArgs, TInput, TResult>,
@@ -134,13 +134,21 @@ interface CommandLogicBuilderValidationStep<TArgs, TInput, TResult> {
   ): CommandLogicBuilderLogicStep<TArgs, TInput, TResult>;
 }
 
-interface CommandLogicBuilderLogicStep<TArgs, TInput, TResult> {
+interface CommandLogicBuilderLogicStep<
+  TArgs extends PureArgs,
+  TInput,
+  TResult,
+> {
   withLogic(
     logicFunc: (input: TInput) => Promise<Result>,
   ): CommandLogicBuilderResultDisplayStep<TArgs, TInput, TResult>;
 }
 
-interface CommandLogicBuilderResultDisplayStep<TArgs, TInput, TResult> {
+interface CommandLogicBuilderResultDisplayStep<
+  TArgs extends PureArgs,
+  TInput,
+  TResult,
+> {
   withResultDisplay(
     resultDisplayFunc: (result: Result) => void,
   ): CommandLogic<TArgs, TInput, TResult>;

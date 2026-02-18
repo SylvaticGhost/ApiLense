@@ -8,6 +8,7 @@ import { CommandLogic } from '../infrastructure/commandLogic.ts';
 import {
   LoadSchemaArgs,
   SchemaEndpointsListArgs,
+  SchemaListArgs,
   SchemaRemoveArgs,
 } from '../contracts/schemaCommandsArgs.ts';
 import { EndpointMetaData } from '../core/endpoint.ts';
@@ -27,6 +28,15 @@ interface SchemaLoadPureArgs extends PureArgs {
 
 interface SchemaRemovePureArgs extends PureArgs {
   schemaId?: number | undefined;
+}
+
+interface SchemaListPureArgs extends PureArgs {
+  interactiveMode?: boolean | undefined;
+  listMode?: boolean | undefined;
+  group?: string | undefined;
+  page?: number | undefined;
+  size?: number | undefined;
+  detailed?: boolean | undefined;
 }
 
 interface SchemaEndpointsListPureArgs extends PureArgs {
@@ -55,17 +65,7 @@ export class SchemaCommandDispatcher {
       .option('-u, --url <url:string>', 'URL of the schema')
       .option('-n, --name <name:string>', 'Name of the schema')
       .option('-g, --group <group:string>', 'Group to assign the schema to')
-      .action(async (options) => {
-        const args = {
-          file: options.file,
-          url: options.url,
-          name: options.name,
-          group: options.group,
-        };
-        const result = await this.schemaService.loadSchema(args);
-
-        SchemaCommandPrinters.loadSchema(result);
-
+      .action((options) => {
         return CommandLogic.define<
           SchemaLoadPureArgs,
           LoadSchemaArgs,
@@ -99,7 +99,7 @@ export class SchemaCommandDispatcher {
           .withResultDisplay((result) => {
             SchemaCommandPrinters.loadSchema(result);
           })
-          .execute(args);
+          .execute(options as SchemaLoadPureArgs);
       })
 
       // schema-list
@@ -126,6 +126,11 @@ export class SchemaCommandDispatcher {
           size: options.size,
           detailed: options.detailed,
         });
+
+        if ((options as SchemaListPureArgs).json) {
+          console.log(result.json());
+          return;
+        }
 
         if (result.isFailure()) {
           console.error(result.errorMessage);
