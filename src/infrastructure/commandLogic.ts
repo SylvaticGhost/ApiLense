@@ -7,8 +7,12 @@ export class CommandLogic<TArgs extends PureArgs, TInput, TResult> {
   constructor(
     private validationFunc: (argValidator: ArgValidator<TArgs>) => Result,
     private logicFunc: (input: TInput) => Promise<Result>,
-    private resultDisplayFunc: (result: Result) => void,
-  ) {}
+    private resultDisplayFunc?: (result: Result) => void,
+    private resultDisplayAsyncFunc?: (result: Result) => Promise<void>,
+  ) {
+    if (!resultDisplayFunc && !resultDisplayAsyncFunc)
+      throw new Error('At least one result display function must be provided');
+  }
 
   static define<
     TArgs extends PureArgs,
@@ -39,8 +43,12 @@ export class CommandLogic<TArgs extends PureArgs, TInput, TResult> {
 
     if (logicResult.isFailure()) {
       this.logFailure(logicResult);
-    } else {
+    } else if (this.resultDisplayAsyncFunc) {
+      await this.resultDisplayAsyncFunc(logicResult);
+    } else if (this.resultDisplayFunc) {
       this.resultDisplayFunc(logicResult);
+    } else {
+      throw new Error('No result display function defined');
     }
   }
 
@@ -58,6 +66,7 @@ class CommandLogicBuilder<TArgs extends PureArgs, TInput, TResult>
   private validation?: (argValidator: ArgValidator<TArgs>) => Result;
   private logic?: (input: TInput) => Promise<Result>;
   private resultDisplay?: (result: Result) => void;
+  private resultDisplayAsync?: (result: Result) => Promise<void>;
 
   withValidation(
     argValidatorConfig: (argValidator: ArgValidator<TArgs>) => Result,
@@ -80,12 +89,38 @@ class CommandLogicBuilder<TArgs extends PureArgs, TInput, TResult>
     return this.build();
   }
 
+  withResultLogging(
+    successMessageCreator: (result: Result) => string,
+  ): CommandLogic<TArgs, TInput, TResult> {
+    this.resultDisplay = (result: Result) => {
+      const successMessage = successMessageCreator(result);
+      if (result.isSuccess()) {
+        console.log(successMessage);
+      } else {
+        console.error(`Error: ${result.errorMessage}`);
+      }
+    };
+    return this.build();
+  }
+
   withResultDisplayMap(
     statementDefinerConf: (definer: ResultDisplayStatementDefiner) => void,
   ): CommandLogic<TArgs, TInput, TResult> {
     this.resultDisplay = (result: Result) => {
       const definer = new ResultDisplayStatementDefiner(result);
       statementDefinerConf(definer);
+    };
+    return this.build();
+  }
+
+  withResultDisplayAsync(
+    resultDisplayFunc: (result: Result) => Promise<void>,
+  ): CommandLogic<TArgs, TInput, TResult> {
+    this.resultDisplayAsync = resultDisplayFunc;
+    this.resultDisplay = (result: Result) => {
+      resultDisplayFunc(result).catch((err) => {
+        console.error('Error in result display:', err);
+      });
     };
     return this.build();
   }
@@ -97,7 +132,7 @@ class CommandLogicBuilder<TArgs extends PureArgs, TInput, TResult>
     if (!this.logic) {
       throw new Error('Logic function is not defined');
     }
-    if (!this.resultDisplay) {
+    if (!this.resultDisplay && !this.resultDisplayAsync) {
       throw new Error('Result display function is not defined');
     }
 
@@ -105,6 +140,7 @@ class CommandLogicBuilder<TArgs extends PureArgs, TInput, TResult>
       this.validation,
       this.logic,
       this.resultDisplay,
+      this.resultDisplayAsync,
     );
   }
 }
@@ -128,7 +164,11 @@ class ResultDisplayStatementDefiner {
   }
 }
 
-interface CommandLogicBuilderValidationStep<TArgs, TInput, TResult> {
+interface CommandLogicBuilderValidationStep<
+  TArgs extends PureArgs,
+  TInput,
+  TResult,
+> extends CommandLogicBuilderLogicStep<TArgs, TInput, TResult> {
   withValidation(
     argValidatorConfig: (argValidator: ArgValidator<TArgs>) => Result,
   ): CommandLogicBuilderLogicStep<TArgs, TInput, TResult>;
@@ -151,6 +191,14 @@ interface CommandLogicBuilderResultDisplayStep<
 > {
   withResultDisplay(
     resultDisplayFunc: (result: Result) => void,
+  ): CommandLogic<TArgs, TInput, TResult>;
+
+  withResultLogging(
+    successMessageCreator: (result: Result) => string,
+  ): CommandLogic<TArgs, TInput, TResult>;
+
+  withResultDisplayAsync(
+    resultDisplayFunc: (result: Result) => Promise<void>,
   ): CommandLogic<TArgs, TInput, TResult>;
 
   withResultDisplayMap(

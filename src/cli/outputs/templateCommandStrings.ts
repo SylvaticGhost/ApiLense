@@ -19,4 +19,10 @@ export class TemplateCommandStrings {
       .appendLine()
       .toString();
   }
+
+  static TemplatesNotFound: string = new StringBuilder()
+    .appendLine()
+    .appendLine(colors.bold.yellow('No templates found for this endpoint ⚠️'))
+    .appendLine()
+    .toString();
 }

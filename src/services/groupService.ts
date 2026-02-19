@@ -9,16 +9,19 @@ export class GroupService {
   ) {}
 
   async createGroup(name: string, color?: string): Promise<Result> {
-    // ensure unique name
     const exists = await this.groupRepo.getByName(name);
-    if (exists) return Result.badRequest(`Group with name ${name} already exists`);
+    if (exists)
+      return Result.badRequest(`Group with name ${name} already exists`);
 
     const created = await this.groupRepo.create(name, color);
     return Result.success(created.id);
   }
 
-  async updateGroup(id: number, name?: string, color?: string): Promise<Result> {
-    // if name provided check unique (excluding same id)
+  async updateGroup(
+    id: number,
+    name?: string,
+    color?: string,
+  ): Promise<Result> {
     if (name) {
       const existing = await this.groupRepo.getByName(name);
       if (existing && existing.id !== id) {
@@ -27,7 +30,6 @@ export class GroupService {
     }
 
     await this.groupRepo.update(id, { name, color });
-    // No textual payload required for consumers; return success without arbitrary text
     return Result.success();
   }
 
@@ -35,17 +37,14 @@ export class GroupService {
     const group = await this.groupRepo.getById(id);
     if (!group) return Result.notFound(`Group with id ${id} not found`);
 
-    // Prevent accidental deletion of the default group
     if (id === 0) return Result.badRequest('Default group cannot be deleted');
 
     if (moveToDefault) {
-      // default group id expected to be 0
       const defaultId = 0;
       await this.schemaRepo.transferBetweenGroups(id, defaultId);
       await this.groupRepo.deleteById(id);
       return Result.success();
     } else {
-      // delete schemas in group in a single DB call
       await this.schemaRepo.deleteByGroupId(id);
       await this.groupRepo.deleteById(id);
       return Result.success();
@@ -53,11 +52,9 @@ export class GroupService {
   }
 
   async addSchemaToGroup(schemaId: number, groupId: number): Promise<Result> {
-    // validate group
     const group = await this.groupRepo.getById(groupId);
     if (!group) return Result.notFound(`Group with id ${groupId} not found`);
 
-    // validate schema exists
     const schema = await this.schemaRepo.getById(schemaId);
     if (!schema) return Result.notFound(`Schema with id ${schemaId} not found`);
 
@@ -69,7 +66,6 @@ export class GroupService {
     const schema = await this.schemaRepo.getById(schemaId);
     if (!schema) return Result.notFound(`Schema with id ${schemaId} not found`);
 
-    // move the schema to default group (id 0)
     await this.schemaRepo.assignToGroup(schemaId, 0);
     return Result.success();
   }
@@ -77,5 +73,11 @@ export class GroupService {
   async listGroups(page = 1, size = 10) {
     const skip = (page - 1) * size;
     return await this.groupRepo.list(skip, size);
+  }
+
+  async list(page = 1, size = 10): Promise<Result> {
+    const skip = (page - 1) * size;
+    const groups = await this.groupRepo.list(skip, size);
+    return Result.success(groups);
   }
 }

@@ -8,8 +8,9 @@ import { RunEndpointCommandArgs } from '../../contracts/testCommandArgs.ts';
 import { TestReport } from '../../core/testReport.ts';
 import { PlotService } from '../../services/plotService.ts';
 import { TestResultPrinter } from '../../utils/printers/testResultPrinter.ts';
+import { PureArgs } from '../../contracts/commonArgs.ts';
 
-interface RunEndpointCommandArgsPure {
+interface RunEndpointCommandArgsPure extends PureArgs {
   schema?: number | undefined;
   endpoint?: string | undefined;
   template?: string | undefined;

@@ -8,6 +8,38 @@ import { Table } from '@cliffy/table';
 import { StringValidators } from '../../validators/stringValidators.ts';
 import { NumberValidator } from '../../validators/fieldValidators/numberValidator.ts';
 import NamedColorProvider from '../../infrastructure/providers/namedColorProvider.ts';
+import { CommandLogic } from '../../infrastructure/commandLogic.ts';
+import { PureArgs } from '../../contracts/commonArgs.ts';
+import { Group } from '../../core/group.ts';
+import { Result } from '../../utils/result.ts';
+import { GroupTablePage } from '../outputs/groupTablePage.ts';
+import { GroupListPrompts } from '../utils/groupListPromts.ts';
+import { SmallSchemaTablePage } from '../outputs/smallSchemaTablePage.ts';
+
+interface GroupCreatePureArgs extends PureArgs {
+  name?: string | undefined;
+  color?: string | undefined;
+}
+
+interface GroupUpdatePureArgs extends PureArgs {
+  id?: number | undefined;
+  name?: string | undefined;
+  color?: string | undefined;
+}
+
+interface GroupDeletePureArgs extends PureArgs {
+  id?: number | undefined;
+  moveToDefault?: boolean | undefined;
+}
+
+interface GroupAddSchemaPureArgs extends PureArgs {
+  schema?: number | undefined;
+  group?: number | undefined;
+}
+
+interface GroupRemoveSchemaPureArgs extends PureArgs {
+  schema?: number | undefined;
+}
 
 export class GroupCommandDispatcher implements IDispatcher {
   constructor(
@@ -27,83 +59,66 @@ export class GroupCommandDispatcher implements IDispatcher {
       .option('-n, --name <name:string>', 'Name of the group to create')
       .option('-c, --color <color:string>', 'Color of the group')
       .action(async (options: any) => {
-        if (!options.name) {
-          console.error('Name is required');
-          return;
-        }
-        const valid = StringValidators.validateName(options.name);
-        if (valid.isFailure()) {
-          console.error(valid.errorMessage);
-          return;
-        }
-
-        // color handling: accept hex or named color
-        let colorHex: string | undefined;
-        if (options.color) {
-          const raw = String(options.color).trim();
-          const normalizedHex = NamedColorProvider.normalizeHex(raw);
-          if (normalizedHex) colorHex = normalizedHex;
-          else {
-            const hexForName = NamedColorProvider.getHexForColor(raw);
-            if (!hexForName) {
-              console.error(
-                'Color must be either a known color name or valid hex (e.g. #ff00ff)',
-              );
-              return;
-            }
-            colorHex = hexForName;
-          }
-        }
-
-        const result = await groupService.createGroup(options.name, colorHex);
-        if (result.isFailure()) {
-          console.error(result.errorMessage);
-        } else {
-          console.log(`Group created with id ${result.value}`);
-        }
+        return await CommandLogic.define<
+          GroupCreatePureArgs,
+          GroupCreatePureArgs,
+          Group
+        >()
+          .withValidation((v) => {
+            return v
+              .for(
+                (a) => a.name,
+                (av) => {
+                  av.defineName('name')
+                    .notNull()
+                    .withValidation(
+                      StringValidators.validateName(options.name),
+                    );
+                },
+              )
+              .mapWithResult((a) => {
+                options.color = NamedColorProvider.fromString(a.color);
+                return Result.success(options);
+              });
+          })
+          .withLogic((args) => groupService.createGroup(args.name!, args.color))
+          .withResultLogging(
+            (result) => `Group created with id ${result.value}`,
+          )
+          .execute(options);
       })
-
       .command('group-update', 'Update a schema group')
       .alias('gu')
       .option('-i, --id <id:number>', 'ID of the group to update')
       .option('-n, --name <name:string>', 'New name for the group')
       .option('-c, --color <color:string>', 'New color for the group')
       .action(async (options: any) => {
-        const id = Number(options.id);
-        const idCheck = new NumberValidator(id, 'id').isPositive().getResult();
-        if (idCheck) {
-          console.error(idCheck.errorMessage);
-          return;
-        }
-
-        let colorHex: string | undefined;
-        if (options.color) {
-          const raw = String(options.color).trim();
-          const normalizedHex = NamedColorProvider.normalizeHex(raw);
-          if (normalizedHex) colorHex = normalizedHex;
-          else {
-            const hexForName = NamedColorProvider.getHexForColor(raw);
-            if (!hexForName) {
-              console.error(
-                'Color must be either a known color name or valid hex (e.g. #ff00ff)',
-              );
-              return;
-            }
-            colorHex = hexForName;
-          }
-        }
-        const result = await groupService.updateGroup(
-          id,
-          options.name,
-          colorHex,
-        );
-        if (result.isFailure()) {
-          console.error(result.errorMessage);
-        } else {
-          console.log('Group updated');
-        }
+        return await CommandLogic.define<
+          GroupUpdatePureArgs,
+          GroupUpdatePureArgs,
+          void
+        >()
+          .withValidation((v) =>
+            v
+              .for(
+                (a) => a.id,
+                (av) =>
+                  av
+                    .defineName('id')
+                    .notNull()
+                    .asNumber((nv) => nv.isPositive()),
+              )
+              .mapWithResult((a) => {
+                options.color = NamedColorProvider.fromString(a.color);
+                return Result.success(options);
+              }),
+          )
+          .withLogic((args) =>
+            groupService.updateGroup(args.id!, args.name, args.color),
+          )
+          .withResultLogging(() => `Group updated successfully`)
+          .execute(options);
       })
-
       .command('group-delete', 'Delete a schema group')
       .alias('gd')
       .option('-i, --id <id:number>', 'ID of the group to delete')
@@ -112,84 +127,109 @@ export class GroupCommandDispatcher implements IDispatcher {
         'Move schemas to default group instead of deleting them',
       )
       .action(async (options: any) => {
-        const id = Number(options.id);
-        const idCheck = new NumberValidator(id, 'id').isPositive().getResult();
-        if (idCheck) {
-          console.error(idCheck.errorMessage);
-          return;
-        }
-
-        const result = await groupService.deleteGroup(
-          id,
-          Boolean(options.moveToDefault),
-        );
-        if (result.isFailure()) {
-          console.error(result.errorMessage);
-        } else {
-          if (options.moveToDefault) {
-            console.log('Group deleted and schemas moved to default');
-          } else {
-            console.log('Group and its schemas deleted');
-          }
-        }
+        return await CommandLogic.define<
+          GroupDeletePureArgs,
+          GroupDeletePureArgs,
+          void
+        >()
+          .withValidation((v) =>
+            v
+              .for(
+                (a) => a.id,
+                (av) =>
+                  av
+                    .defineName('id')
+                    .notNull()
+                    .asNumber((nv) => nv.isPositive()),
+              )
+              .map((a) => a),
+          )
+          .withLogic((args) =>
+            groupService.deleteGroup(args.id!, Boolean(options.moveToDefault)),
+          )
+          .withResultLogging(() => {
+            if (options.moveToDefault) {
+              return 'Group deleted and schemas moved to default';
+            } else {
+              return 'Group and its schemas deleted';
+            }
+          })
+          .execute(options);
       })
-
       .command('group-add-schema', 'Assign a schema to a group')
       .alias('gas')
       .option('-s, --schema <schema:number>', 'Schema id')
       .option('-g, --group <group:number>', 'Group id')
-      .action(async (options: any) => {
-        // Validate inputs
-        const schemaId = Number(options.schema);
-        const groupId = Number(options.group);
-
-        const sCheck = new NumberValidator(schemaId, 'schema')
-          .isPositive()
-          .getResult();
-        if (sCheck) {
-          console.error(sCheck.errorMessage);
-          return;
-        }
-        const gCheck = new NumberValidator(groupId, 'group')
-          .isNonNegative()
-          .getResult();
-        if (gCheck) {
-          console.error(gCheck.errorMessage);
-          return;
-        }
-
-        const result = await groupService.addSchemaToGroup(schemaId, groupId);
-        if (result.isFailure()) {
-          console.error(result.errorMessage);
-        } else {
-          console.log(`Schema ${schemaId} assigned to group ${groupId}`);
-        }
-      })
-
+      .action(
+        async (options: any) =>
+          await CommandLogic.define<
+            GroupAddSchemaPureArgs,
+            GroupAddSchemaPureArgs,
+            void
+          >()
+            .withValidation((v) =>
+              v
+                .for(
+                  (a) => a.schema,
+                  (av) =>
+                    av
+                      .defineName('schemaId')
+                      .notNull()
+                      .asNumber((nv) => nv.isPositive()),
+                )
+                .for(
+                  (a) => a.group,
+                  (av) =>
+                    av
+                      .defineName('groupId')
+                      .notNull()
+                      .asNumber((nv) => nv.isNonNegative()),
+                )
+                .map((a) => a),
+            )
+            .withLogic((args) =>
+              groupService.addSchemaToGroup(args.schema!, args.group!),
+            )
+            .withResultLogging(
+              (result) =>
+                `Schema ${options.schema} assigned to group ${options.group}`,
+            )
+            .execute(options),
+      )
       .command(
         'group-remove-schema',
         'Remove schema from its group (moves to default)',
       )
       .alias('grs')
       .option('-s, --schema <schema:number>', 'Schema id')
-      .action(async (options: any) => {
-        const schemaId = Number(options.schema);
-        const sCheck = new NumberValidator(schemaId, 'schema')
-          .isPositive()
-          .getResult();
-        if (sCheck) {
-          console.error(sCheck.errorMessage);
-          return;
-        }
-
-        const result = await groupService.removeSchemaFromGroup(schemaId);
-        if (result.isFailure()) {
-          console.error(result.errorMessage);
-        } else {
-          console.log(`Schema ${schemaId} moved to default group`);
-        }
-      })
-
+      .action(
+        async (options: any) =>
+          await CommandLogic.define<
+            GroupRemoveSchemaPureArgs,
+            GroupRemoveSchemaPureArgs,
+            void
+          >()
+            .withValidation((v) =>
+              v
+                .for(
+                  (a) => a.schema,
+                  (av) =>
+                    av
+                      .defineName('schemaId')
+                      .notNull()
+                      .asNumber((nv) => nv.isPositive()),
+                )
+                .map((a) => a),
+            )
+            .withLogic((args) =>
+              groupService.removeSchemaFromGroup(args.schema!),
+            )
+            .withResultLogging(
+              (result) =>
+                `Schema ${options.schema} removed from its group and moved to default`,
+            )
+            .execute(options),
+      )
       .command('group-list', 'List all groups')
       .alias('gl')
       .option('-i, --interactive-mode', 'Enable interactive mode', {
@@ -203,7 +243,6 @@ export class GroupCommandDispatcher implements IDispatcher {
         const isInteractive = options.interactiveMode && !isListMode;
 
         if (isInteractive) {
-          // interactive with arrow navigation similar to schemas
           let currentPage = Number(options.page) || 1;
           const pageSize = Number(options.size) || 10;
 
@@ -229,45 +268,13 @@ export class GroupCommandDispatcher implements IDispatcher {
               break;
             }
 
-            const header = ['ID', 'Name', 'Color'];
-            const table = new Table().header(header);
-            groups.forEach((g: any) => {
-              const colorVal = g.color || '';
-              let coloredLabel = '-';
-              if (colorVal) {
-                const normalized =
-                  NamedColorProvider.normalizeHex(colorVal) ||
-                  colorVal.replace('#', '').toUpperCase();
-                const name = NamedColorProvider.findNameForHex(normalized);
-                const label = name
-                  ? name.charAt(0).toUpperCase() + name.slice(1)
-                  : '#' + normalized;
-                // Colorize text itself (foreground color)
-                coloredLabel = NamedColorProvider.colorizeTextByHex(
-                  normalized,
-                  label,
-                );
-              }
-              table.push([g.id.toString(), g.name, coloredLabel]);
-            });
+            const table = new GroupTablePage(groups, currentPage);
+            table.display();
 
-            console.log(
-              `\nPage ${currentPage} — showing ${groups.length} group(s)`,
+            const choice = await GroupListPrompts.groupTablePager(
+              groups,
+              currentPage,
             );
-            table.render();
-
-            const choice = await Select.prompt({
-              message: 'Open group or navigate',
-              options: [
-                ...groups.map((g: any) => ({
-                  name: `${g.name} (ID:${g.id})`,
-                  value: `open:${g.id}`,
-                })),
-                { name: 'Next page', value: 'next' },
-                { name: 'Prev page', value: 'prev' },
-                { name: 'Exit', value: 'exit' },
-              ],
-            });
 
             if (choice === 'next') {
               currentPage++;
@@ -281,10 +288,9 @@ export class GroupCommandDispatcher implements IDispatcher {
 
             if (typeof choice === 'string' && choice.startsWith('open:')) {
               const id = Number(choice.split(':')[1]);
-              // show schemas in this group interactively
               const schemasResult = await schemaService.listSchemas({
                 group: String(id),
-                page: 1,
+                page: currentPage,
                 size: 10,
                 detailed: false,
               });
@@ -295,23 +301,12 @@ export class GroupCommandDispatcher implements IDispatcher {
                 if (pageSchemas.length === 0) {
                   console.log('No schemas in this group.');
                 } else {
-                  const header = ['ID', 'Name', 'URL'];
-                  const t = new Table().header(header);
-                  pageSchemas.forEach((s: any) => {
-                    const shortUrl = s.url
-                      ? s.url.length > 80
-                        ? s.url.slice(0, 77) + '...'
-                        : s.url
-                      : '-';
-                    t.push([s.id.toString(), s.name, shortUrl]);
-                  });
-                  t.render();
+                  new SmallSchemaTablePage(pageSchemas).display();
                 }
               }
             }
           }
         } else {
-          // list mode
           const page = Number(options.page) || 1;
           const size = Number(options.size) || 10;
 
@@ -329,32 +324,27 @@ export class GroupCommandDispatcher implements IDispatcher {
             console.error(sizeCheck.errorMessage);
             return;
           }
-          const groups = await groupService.listGroups(page, size);
+
+          const result = await groupService.list(page, size);
+
+          if (options.json) {
+            console.log(JSON.stringify(result.value, null, 2));
+            return;
+          }
+
+          if (result.isFailure()) {
+            console.error(result.errorMessage);
+            return;
+          }
+
+          const groups = result.value || [];
+
           if (!groups || groups.length === 0) {
             console.log('No groups found.');
             return;
           }
-          const header = ['ID', 'Name', 'Color'];
-          const table = new Table().header(header);
-          groups.forEach((g: any) => {
-            const colorVal = g.color || '';
-            let coloredLabel = '-';
-            if (colorVal) {
-              const normalized =
-                NamedColorProvider.normalizeHex(colorVal) ||
-                colorVal.replace('#', '').toUpperCase();
-              const name = NamedColorProvider.findNameForHex(normalized);
-              const label = name
-                ? name.charAt(0).toUpperCase() + name.slice(1)
-                : '#' + normalized;
-              coloredLabel = NamedColorProvider.colorizeTextByHex(
-                normalized,
-                label,
-              );
-            }
-            table.push([g.id.toString(), g.name, coloredLabel]);
-          });
-          table.render();
+          const table = new GroupTablePage(groups, page);
+          table.display();
         }
       });
   }

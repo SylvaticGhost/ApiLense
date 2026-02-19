@@ -1,11 +1,10 @@
 ﻿import { Command } from '@cliffy/command';
-import { Table } from '@cliffy/table';
-import { Select } from '@cliffy/prompt';
 import { DependencyContainer } from '../../infrastructure/dependencyContainer.ts';
 import { SchemaService } from '../../services/schemaService.ts';
 import { SchemaCommandPrinters } from '../../utils/printers/schemaCommandPrinters.ts';
 import { CommandLogic } from '../../infrastructure/commandLogic.ts';
 import {
+  LoadSchemaArgs,
   SchemaEndpointsListArgs,
   SchemaRemoveArgs,
 } from '../../contracts/schemaCommandsArgs.ts';
@@ -17,14 +16,36 @@ import { HTTP_METHODS } from '../../core/enums.ts';
 import { SchemaCommandStrings } from './../outputs/schemaCommandStrings.ts';
 import { ApiSchema } from '../../core/apiSchema.ts';
 import { TemplateFillingService } from '../../services/templateFillingService.ts';
-import { colors } from '@cliffy/ansi/colors';
 import { TemplateCommandStrings } from './../outputs/templateCommandStrings.ts';
+import { PureArgs } from '../../contracts/commonArgs.ts';
+import { SchemaListPrompts } from '../utils/schemaListPromts.ts';
+import {
+  EndpointListDisplayStateMachine,
+  SchemaListDisplayStateMachine,
+} from '../utils/schemaCommandsStates.ts';
+import { SchemaTablePage } from '../outputs/schemaTablePage.ts';
 
-interface SchemaRemovePureArgs {
+interface SchemaLoadPureArgs extends PureArgs {
+  file?: string | undefined;
+  url?: string | undefined;
+  name?: string | undefined;
+  group?: string | undefined;
+}
+
+interface SchemaListPureArgs extends PureArgs {
+  interactiveMode?: boolean | undefined;
+  listMode?: boolean | undefined;
+  group?: string | undefined;
+  page?: number | undefined;
+  size?: number | undefined;
+  detailed?: boolean | undefined;
+}
+
+interface SchemaRemovePureArgs extends PureArgs {
   schemaId?: number | undefined;
 }
 
-interface SchemaEndpointsListPureArgs {
+interface SchemaEndpointsListPureArgs extends PureArgs {
   schemaId?: number | undefined;
   method?: string | undefined;
   page?: number | undefined;
@@ -53,16 +74,19 @@ export class SchemaCommandDispatcher {
       .option('-u, --url <url:string>', 'URL of the schema')
       .option('-n, --name <name:string>', 'Name of the schema')
       .option('-g, --group <group:string>', 'Group to assign the schema to')
-      .action(async (options) => {
-        const args = {
-          file: options.file,
-          url: options.url,
-          name: options.name,
-          group: options.group,
-        };
-        const result = await this.schemaService.loadSchema(args);
-
-        SchemaCommandPrinters.loadSchema(result);
+      .action((options) => {
+        return CommandLogic.define<
+          SchemaLoadPureArgs,
+          LoadSchemaArgs,
+          ApiSchema
+        >()
+          .withLogic(async (args) => {
+            return await this.schemaService.loadSchema(args);
+          })
+          .withResultDisplay((result) => {
+            SchemaCommandPrinters.loadSchema(result);
+          })
+          .execute(options as SchemaLoadPureArgs);
       })
       // schema-list
       .command('schema-list', 'List all loaded schemas')
@@ -89,6 +113,12 @@ export class SchemaCommandDispatcher {
           detailed: options.detailed,
         });
 
+        if ((options as SchemaListPureArgs).json) {
+          const json = result.json();
+          console.log(json);
+          return;
+        }
+
         if (result.isFailure()) {
           console.error(result.errorMessage);
           return;
@@ -104,12 +134,12 @@ export class SchemaCommandDispatcher {
         if (isInteractive) {
           let schemas: ApiSchema[] | undefined = undefined;
           let selectedSchemaId: number | undefined = undefined;
-          let selectedEndpointName: string | undefined = undefined;
+          let selectedEndpoint: EndpointMetaData | undefined = undefined;
+          let stateMachine = new SchemaListDisplayStateMachine();
+          let endpointStateMachine = new EndpointListDisplayStateMachine();
 
-          let state: 'LIST' | 'DETAILS' | 'ENDPOINTS' | 'CLOSE' = 'LIST';
-
-          while (state !== 'CLOSE') {
-            if (state === 'LIST') {
+          while (!stateMachine.is('CLOSE')) {
+            if (stateMachine.is('LIST')) {
               if (!schemas) {
                 const listResult = await this.schemaService.listSchemas({
                   group: options.group,
@@ -127,18 +157,10 @@ export class SchemaCommandDispatcher {
               }
               if (!schemas) throw new Error('Schemas should be defined here');
 
-              Deno.stdout.writeSync(new TextEncoder().encode('\x1b[2J\x1b[H'));
-              const selectedId = await Select.prompt({
-                message: 'Select a schema to view details',
-                options: schemas.map((s: any) => ({
-                  name: SchemaCommandStrings.schemaRowPreview(s),
-                  value: s.id.toString(),
-                })),
-              });
-
-              selectedSchemaId = Number(selectedId);
-              state = 'DETAILS';
-            } else if (state === 'DETAILS') {
+              selectedSchemaId =
+                await SchemaListPrompts.selectSchemaPrompt(schemas);
+              stateMachine.to('DETAILS');
+            } else if (stateMachine.is('DETAILS')) {
               if (!selectedSchemaId)
                 throw new Error('Selected schema ID should be defined here');
               if (!schemas) throw new Error('Schemas should be defined here');
@@ -147,51 +169,23 @@ export class SchemaCommandDispatcher {
                 (s: any) => s.id === selectedSchemaId,
               );
 
-              if (!selectedSchema)
+              if (!selectedSchema) {
                 throw new Error('Selected schema should be defined here');
+              }
 
               console.info(
                 SchemaCommandStrings.schemaDetails(selectedSchema, true),
               );
 
-              Deno.stdout.writeSync(new TextEncoder().encode('\x1b[2J\x1b[H'));
-              const action = await Select.prompt({
-                message: 'Next action',
-                options: [
-                  { name: 'Return to list', value: 'return' },
-                  { name: 'List endpoints', value: 'endpoints' },
-                  { name: 'Close', value: 'close' },
-                ],
-              });
-
-              if (action === 'return') {
-                state = 'LIST';
-              } else if (action === 'endpoints') {
-                state = 'ENDPOINTS';
-              } else {
-                state = 'CLOSE';
-              }
-            } else if (state === 'ENDPOINTS') {
-              if (!selectedSchemaId)
+              await SchemaListPrompts.selectActionAfterSchemaDetails(
+                stateMachine,
+              );
+            } else if (stateMachine.is('ENDPOINTS')) {
+              if (!selectedSchemaId) {
                 throw new Error('Selected schema ID should be defined here');
+              }
 
-              const httpMethodOptions = [
-                { name: 'All methods', value: 'ALL' },
-                ...(
-                  Object.keys(HTTP_METHODS) as Array<keyof typeof HTTP_METHODS>
-                ).map((m) => ({
-                  name: new StringBuilder()
-                    .appendColor(m, ColorProvider.getHttpMethodColor(m))
-                    .toString(),
-                  value: m,
-                })),
-              ] as Array<{ name: string; value: string }>;
-
-              Deno.stdout.writeSync(new TextEncoder().encode('\x1b[2J\x1b[H'));
-              const methodChoice = await Select.prompt({
-                message: 'Filter endpoints by HTTP method',
-                options: httpMethodOptions,
-              });
+              const methodChoice = await SchemaListPrompts.selectHttpMethod();
 
               const endpointsResult =
                 await this.schemaService.listSchemaEndpoints({
@@ -212,196 +206,90 @@ export class SchemaCommandDispatcher {
               const pagedList =
                 endpointsResult.castValueStrict<PagedList<EndpointMetaData>>();
 
-              const sb = new StringBuilder();
-              sb.appendLine(
-                `Endpoints for schema ${selectedSchemaId} (Page ${pagedList.page} of ${Math.ceil(
-                  pagedList.totalCount / pagedList.size,
-                )}):`,
+              console.info(
+                SchemaCommandStrings.endpointListPages(
+                  selectedSchemaId,
+                  pagedList,
+                ),
               );
 
-              let endpointState: 'SELECT' | 'ACTIONS' | 'BACK' | 'CLOSE' =
-                'SELECT';
-              let selectedEndpoint: EndpointMetaData | undefined;
+              endpointStateMachine = new EndpointListDisplayStateMachine();
+              selectedEndpoint = await SchemaListPrompts.selectEndpoint(
+                pagedList,
+                endpointStateMachine,
+                methodChoice === 'ALL' ? undefined : methodChoice,
+              );
+            } else if (endpointStateMachine.is('ACTIONS') && selectedEndpoint) {
+              console.info(
+                SchemaCommandStrings.endpointDetails(selectedEndpoint),
+              );
 
-              const methodFilter =
-                methodChoice === 'ALL'
-                  ? undefined
-                  : (methodChoice as keyof typeof HTTP_METHODS);
+              const nextAction =
+                await SchemaListPrompts.selectActionAfterEndpointDetails();
 
-              while (endpointState !== 'BACK' && endpointState !== 'CLOSE') {
-                if (endpointState === 'SELECT') {
-                  Deno.stdout.writeSync(
-                    new TextEncoder().encode('\x1b[2J\x1b[H'),
+              if (nextAction === 'copy_path') {
+                console.info(selectedEndpoint.path);
+                endpointStateMachine.to('ACTIONS');
+              } else if (nextAction === 'copy_full') {
+                console.info(
+                  `${selectedEndpoint.method} ${selectedEndpoint.path}`,
+                );
+                endpointStateMachine.to('ACTIONS');
+              } else if (nextAction === 'reselect') {
+                endpointStateMachine.to('SELECT');
+              } else if (nextAction === 'refilter') {
+                endpointStateMachine.to('BACK'); // go up, re-enter ENDPOINTS
+              } else if (nextAction === 'back') {
+                endpointStateMachine.to('BACK');
+              } else if (nextAction === 'list_templates') {
+                const templatesResult =
+                  await this.templateFillingService.listTemplates(
+                    selectedEndpoint.schemaId,
+                    selectedEndpoint.name,
                   );
-                  const selectedEndpointId = await Select.prompt({
-                    message: `Select endpoint (${methodFilter ?? 'ALL'})`,
-                    options: pagedList.items.map((e) => ({
-                      name: new StringBuilder()
-                        .append('[')
-                        .appendColor(
-                          e.method,
-                          ColorProvider.getHttpMethodColor(e.method),
-                        )
-                        .append('] ')
-                        .append(e.path)
-                        .toString(),
-                      value: e.name,
-                    })),
-                  });
 
-                  selectedEndpoint = pagedList.items.find(
-                    (e) => e.name === selectedEndpointId,
-                  );
-                  if (!selectedEndpoint) {
-                    console.error('Endpoint not found');
-                    endpointState = 'SELECT';
+                if (templatesResult.isFailure()) {
+                  console.error(templatesResult.errorMessage);
+                  endpointStateMachine.to('ACTIONS');
+                } else {
+                  const templates = templatesResult.value;
+                  if (!templates || templates.length === 0) {
+                    console.info(TemplateCommandStrings.TemplatesNotFound);
                   } else {
-                    endpointState = 'ACTIONS';
-                  }
-                } else if (endpointState === 'ACTIONS' && selectedEndpoint) {
-                  const detailsSb = new StringBuilder();
-                  detailsSb
-                    .appendLine()
-                    .appendLine(colors.bold('Endpoint details:'))
-                    .append('- Name: ')
-                    .appendLine(selectedEndpoint.name)
-                    .append('- Method: ')
-                    .appendColor(
-                      selectedEndpoint.method,
-                      ColorProvider.getHttpMethodColor(selectedEndpoint.method),
-                    )
-                    .append('\n')
-                    .append('- Path: ')
-                    .appendLine(selectedEndpoint.path);
-                  console.info(detailsSb.toString());
+                    const selectedTemplate =
+                      await SchemaListPrompts.selectTemplateAction(templates);
 
-                  const nextAction = await Select.prompt({
-                    message: 'Endpoint action',
-                    options: [
-                      { name: 'Copy path', value: 'copy_path' },
-                      { name: 'Copy method+path', value: 'copy_full' },
-                      { name: 'List templates', value: 'list_templates' },
-                      { name: 'Select another endpoint', value: 'reselect' },
-                      { name: 'Change method filter', value: 'refilter' },
-                      { name: 'Return to schema details', value: 'back' },
-                      { name: 'Close', value: 'close' },
-                    ],
-                  });
-
-                  if (nextAction === 'copy_path') {
-                    console.info(selectedEndpoint.path);
-                    endpointState = 'ACTIONS';
-                  } else if (nextAction === 'copy_full') {
-                    console.info(
-                      `${selectedEndpoint.method} ${selectedEndpoint.path}`,
-                    );
-                    endpointState = 'ACTIONS';
-                  } else if (nextAction === 'reselect') {
-                    endpointState = 'SELECT';
-                  } else if (nextAction === 'refilter') {
-                    endpointState = 'BACK'; // go up, re-enter ENDPOINTS
-                  } else if (nextAction === 'back') {
-                    endpointState = 'BACK';
-                  } else if (nextAction === 'list_templates') {
-                    const templatesResult =
-                      await this.templateFillingService.listTemplates(
-                        selectedSchemaId,
-                        selectedEndpoint.name,
-                      );
-
-                    if (templatesResult.isFailure()) {
-                      console.error(templatesResult.errorMessage);
-                      endpointState = 'ACTIONS';
+                    if (selectedTemplate === '__back') {
+                      endpointStateMachine.to('ACTIONS');
                     } else {
-                      const templates = templatesResult.value;
-                      if (!templates || templates.length === 0) {
-                        console.info();
+                      const template = templates.find(
+                        (t) => t.name === selectedTemplate,
+                      );
+                      if (template) {
                         console.info(
-                          colors.bold.yellow(
-                            'No templates found for this endpoint ⚠️',
-                          ),
+                          TemplateCommandStrings.templateDetails(template),
                         );
-                        console.info();
+
+                        await SchemaListPrompts.selectActionAfterTemplateDetails(
+                          endpointStateMachine,
+                        );
                       } else {
-                        const selectionOptions = templates.map((t) => ({
-                          name: t.name,
-                          value: t.name,
-                        }));
-
-                        selectionOptions.push({
-                          name: 'Back',
-                          value: '__back',
-                        });
-
-                        Deno.stdout.writeSync(
-                          new TextEncoder().encode('\x1b[2J\x1b[H'),
-                        );
-
-                        const selectedTemplate = await Select.prompt({
-                          message: 'Select a template to view details',
-                          options: templates.map((t) => ({
-                            name: t.name,
-                            value: t.name,
-                          })),
-                        });
-
-                        if (selectedTemplate === '__back') {
-                          endpointState = 'ACTIONS';
-                        } else {
-                          const template = templates.find(
-                            (t) => t.name === selectedTemplate,
-                          );
-                          if (template) {
-                            console.info(
-                              TemplateCommandStrings.templateDetails(template),
-                            );
-
-                            const actionOnTemplate = await Select.prompt({
-                              message: 'Select action with template',
-                              options: [
-                                {
-                                  name: 'Return',
-                                  value: 'return',
-                                },
-                                {
-                                  name: 'Run test',
-                                  value: 'run_test',
-                                },
-                                {
-                                  name: 'Delete',
-                                  value: 'details',
-                                },
-                                {
-                                  name: 'Close',
-                                  value: 'close',
-                                },
-                              ],
-                            });
-
-                            if (actionOnTemplate === 'back')
-                              endpointState = 'ACTIONS';
-                            else if (actionOnTemplate === 'close')
-                              endpointState = 'CLOSE';
-                          } else {
-                            console.error('Template not found');
-                          }
-                          endpointState = 'ACTIONS';
-                        }
+                        console.error('Template not found');
                       }
+                      endpointStateMachine.to('ACTIONS');
                     }
-                  } else {
-                    endpointState = 'CLOSE';
                   }
                 }
-              }
-
-              if (endpointState === 'BACK') {
-                // Decide where to go: if user chose refilter, stay in ENDPOINTS; else return to DETAILS.
-                state = 'DETAILS';
               } else {
-                state = 'CLOSE';
+                endpointStateMachine.to('CLOSE');
               }
             }
+          }
+
+          if (endpointStateMachine.is('BACK')) {
+            stateMachine.to('DETAILS');
+          } else {
+            stateMachine.to('CLOSE');
           }
         } else {
           let currentPage = Number(options.page) || 1;
@@ -422,58 +310,19 @@ export class SchemaCommandDispatcher {
 
             const pageSchemas = resultPage.value || [];
 
-            const header = ['ID', 'Name', 'Group', 'URL'];
-            if (options.detailed) {
-              header.push('Created At', 'Last Usage');
-            }
-
-            const table = new Table().header(header);
-
-            pageSchemas.forEach((s: any) => {
-              const url = s.url || '-';
-              const shortUrl = url.length > 80 ? url.slice(0, 77) + '...' : url;
-              const row = [
-                s.id.toString(),
-                s.name,
-                s.Group?.name || '-',
-                shortUrl,
-              ];
-
-              if (options.detailed) {
-                row.push(
-                  s.createdAt
-                    ? new Date(s.createdAt).toLocaleDateString()
-                    : '-',
-                );
-                row.push(
-                  s.updatedAt
-                    ? new Date(s.updatedAt).toLocaleDateString()
-                    : '-',
-                );
-              }
-
-              table.push(row);
-            });
-
-            console.info(
-              `\nPage ${currentPage} — showing ${pageSchemas.length} item(s) (size ${pageSize})`,
+            const table = new SchemaTablePage(
+              pageSchemas,
+              options.detailed,
+              currentPage,
+              pageSize,
             );
-            table.render();
+            table.display();
 
-            const canPrev = currentPage > 1;
-            const canNext = pageSchemas.length === pageSize;
-
-            const navOptions: Array<{ name: string; value: string }> = [];
-            if (canPrev)
-              navOptions.push({ name: '⟵ Prev page', value: 'prev' });
-            if (canNext)
-              navOptions.push({ name: 'Next page ⟶', value: 'next' });
-            navOptions.push({ name: 'Exit', value: 'exit' });
-
-            const choice = await Select.prompt({
-              message: 'Navigate pages',
-              options: navOptions,
-            });
+            const choice = await SchemaListPrompts.schemaTablePagerPrompt(
+              pageSchemas,
+              currentPage,
+              pageSize,
+            );
 
             if (choice === 'prev') {
               currentPage = Math.max(1, currentPage - 1);
@@ -554,7 +403,11 @@ export class SchemaCommandDispatcher {
               result.castValueStrict<PagedList<EndpointMetaData>>();
             const sb = new StringBuilder();
             sb.appendLine(
-              `Endpoints for schema ${pagedList.items[0].schemaId} (Page ${pagedList.page} of ${Math.ceil(pagedList.totalCount / pagedList.size)}):`,
+              `Endpoints for schema ${
+                pagedList.items[0].schemaId
+              } (Page ${pagedList.page} of ${Math.ceil(
+                pagedList.totalCount / pagedList.size,
+              )}):`,
             );
             for (const endpoint of pagedList.items) {
               sb.append('- [');
@@ -568,7 +421,6 @@ export class SchemaCommandDispatcher {
           })
           .execute(options);
       })
-
       // schema-remove
       .command('schema-remove', 'Remove specified schema by ID or name')
       .alias('sr')

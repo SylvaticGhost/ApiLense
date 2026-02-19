@@ -9,8 +9,9 @@ import { Guard } from '../../utils/guard.ts';
 import { StringBuilder } from '../../utils/stringBuilder.ts';
 import { FileUrl } from '../../utils/types/fileUrl.ts';
 import { colors } from '@cliffy/ansi/colors';
+import { PureArgs } from '../../contracts/commonArgs.ts';
 
-interface TemplateFillingNewPureArgs {
+interface TemplateFillingNewPureArgs extends PureArgs {
   schema?: string | undefined;
   endpoint?: string | undefined;
   name?: string | undefined;
@@ -114,7 +115,7 @@ export class TemplateFillingDispatcher implements IDispatcher {
 
               console.log(sb.toString());
             })
-            .execute(options),
+            .execute(options as TemplateFillingNewPureArgs),
       );
   }
 }

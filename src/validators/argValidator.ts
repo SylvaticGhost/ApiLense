@@ -1,3 +1,4 @@
+import { Guard } from '../utils/guard.ts';
 import { Result } from '../utils/result.ts';
 import { NumberValidator } from './fieldValidators/numberValidator.ts';
 import { StringValidator } from './fieldValidators/stringValidator.ts';
@@ -33,6 +34,16 @@ export class ArgValidator<TArg> {
 
     const mapped = mapper(this.arg);
     return Result.success(mapped);
+  }
+
+  mapWithResult<TOut>(mapper: (arg: TArg) => Result): Result {
+    if (this.result) return this.result;
+    const result = mapper(this.arg);
+    Guard.against.nullOrUndefined(
+      result,
+      'Mapper function must return a Result',
+    );
+    return result;
   }
 }
 
@@ -152,6 +163,12 @@ class FieldValidator<TField>
     this.result ??= stringValidationResult;
   }
 
+  withValidation(res: Result): FieldValidator<TField> {
+    if (this.result || this.skip) return this;
+    if (res.isFailure()) this.result = res;
+    return this;
+  }
+
   notNull(): FieldValidator<TField> {
     return this.should(
       (field) => field !== null && field !== undefined,
@@ -194,6 +211,10 @@ interface IFieldValidatorConstraintStep<TField> {
   ): IFieldValidatorConstraintWithFinalizeStep<TField>;
 
   notNull(): IFieldValidatorConstraintWithFinalizeStep<TField>;
+
+  withValidation(
+    res: Result,
+  ): IFieldValidatorConstraintWithFinalizeStep<TField>;
 
   asNumber(numValidatorConf: (numValidator: NumberValidator) => void): void;
 

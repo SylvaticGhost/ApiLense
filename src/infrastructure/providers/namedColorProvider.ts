@@ -1,3 +1,5 @@
+import { Result } from '../../utils/result.ts';
+
 export class NamedColorProvider {
   // store hex without '#' and uppercase
   static COLORS: Record<string, string> = {
@@ -47,6 +49,10 @@ export class NamedColorProvider {
     return NamedColorProvider.COLORS[key];
   }
 
+  static hasHexForColor(colorName: string): boolean {
+    return !!NamedColorProvider.getHexForColor(colorName);
+  }
+
   static findNameForHex(hexCode: string): string | undefined {
     const normalized = NamedColorProvider.normalizeHex(hexCode);
     if (!normalized) return undefined;
@@ -89,6 +95,26 @@ export class NamedColorProvider {
     if (!rgb) return text;
     // Use foreground (text) color with 24-bit color escape
     return `\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m${text}${NamedColorProvider.RESET}`;
+  }
+
+  static fromString(colorNameOrHex: string | undefined): string | undefined {
+    let colorHex: string | undefined;
+    if (colorNameOrHex) {
+      const raw = String(colorNameOrHex).trim();
+      const normalizedHex = NamedColorProvider.normalizeHex(raw);
+      if (normalizedHex) colorHex = normalizedHex;
+      else {
+        const hexForName = NamedColorProvider.getHexForColor(raw);
+        if (!hexForName) {
+          console.error(
+            'Color must be either a known color name or valid hex (e.g. #ff00ff)',
+          );
+          return;
+        }
+        colorHex = hexForName;
+      }
+    }
+    return colorHex;
   }
 }
 

@@ -4,5 +4,9 @@ export interface PagedListArgs {
 }
 
 export interface PureArgs {
-  json: boolean;
+  json: boolean | undefined;
+}
+
+export interface InteractivePureArgs extends PureArgs {
+  interactiveMode?: boolean | undefined;
 }
